@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Timetable Tracker</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#17181c;--muted:#70747d;--line:#e5e7eb;--accent:#5b5ce2;--good:#22a06b;--bad:#e05252;--pending:#f1f3f5}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:24px;margin:0 0 4px}.sub{color:var(--muted);font-size:13px}.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,input{font:inherit}button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 12px;cursor:pointer}button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+input{border:1px solid var(--line);border-radius:9px;padding:9px;background:white}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px}.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}.bar{padding:12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.table-wrap{overflow:auto}table{border-collapse:separate;border-spacing:0;min-width:900px;width:100%}th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;padding:7px}th{background:#fafafa;font-size:11px;color:var(--muted);position:sticky;top:0;z-index:2}th:first-child,td:first-child{position:sticky;left:0;background:var(--card);z-index:3;text-align:left;min-width:180px}th:first-child{z-index:4}
+.day{min-width:34px}.cell{width:32px;height:32px;border-radius:8px;border:0;padding:0;font-weight:700}.none{background:var(--pending);color:#adb1b8}.yes{background:#dff5ea;color:var(--good)}.no{background:#fde4e4;color:var(--bad)}.today{outline:2px solid var(--accent);outline-offset:-2px}
+.task-name{font-weight:600;font-size:13px}.task-time{font-size:11px;color:var(--muted)}
+.del{color:var(--bad);border:0;background:transparent;padding:4px}.empty{padding:28px;text-align:center;color:var(--muted)}
+@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:21px}.wrap{padding:12px}.stat b{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>📅 My Timetable Tracker</h1><div class="sub">✓ = complete · ✕ = missed · — = not marked</div></div>
+    <div class="controls">
+      <button id="prev">‹</button><input id="month" type="month"><button id="next">›</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="rate">0%</b><span>Monthly completion</span></div>
+    <div class="stat"><b id="done">0</b><span>Completed</span></div>
+    <div class="stat"><b id="miss">0</b><span>Missed</span></div>
+    <div class="stat"><b id="streak">0</b><span>Best streak</span></div>
+  </div>
+  <div class="panel">
+    <div class="bar">
+      <strong id="monthTitle"></strong>
+      <form id="add"><input id="task" placeholder="Task / subject" required><input id="time" placeholder="Time (e.g. 7:00 AM)"><button class="primary">+ Add task</button></form>
+    </div>
+    <div id="grid" class="table-wrap"></div>
+  </div>
+</div>
+<script>
+const KEY='my_timetable_tracker_v1';
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{tasks:[],marks:{}};
+let view=new Date(); view.setDate(1);
+const pad=n=>String(n).padStart(2,'0'), key=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const monthInput=document.querySelector('#month');
+function render(){
+ const y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();
+ monthInput.value=`${y}-${pad(m+1)}`;
+ document.querySelector('#monthTitle').textContent=view.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+ let h='<table><thead><tr><th>Task</th>';
+ for(let d=1;d<=days;d++)h+=`<th class="day">${d}</th>`;
+ h+='</tr></thead><tbody>';
+ if(!state.tasks.length)h+='<tr><td colspan="'+(days+1)+'" class="empty">Abhi koi task nahi. Upar se task add karo 👆</td></tr>';
+ state.tasks.forEach((t,ti)=>{
+   h+=`<tr><td><div class="task-name">${esc(t.name)}</div><div class="task-time">${esc(t.time||'')}</div><button class="del" data-del="${ti}">delete</button></td>`;
+   for(let d=1;d<=days;d++){
+     const k=`${y}-${pad(m+1)}-${pad(d)}|${ti}`, v=state.marks[k]||0;
+     const cls=v===1?'yes':v===2?'no':'none', txt=v===1?'✓':v===2?'✕':'—';
+     const today=key(new Date())===`${y}-${pad(m+1)}-${pad(d)}`?' today':'';
+     h+=`<td><button class="cell ${cls}${today}" data-k="${k}" aria-label="${txt}">${txt}</button></td>`;
+   }h+='</tr>';
+ });
+ h+='</tbody></table>'; document.querySelector('#grid').innerHTML=h;
+ document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{let k=b.dataset.k,v=state.marks[k]||0;state.marks[k]=v===0?1:v===1?2:0;save();render()});
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{let i=+b.dataset.del;if(confirm('Task delete karna hai?')){state.tasks.splice(i,1);state.marks={};save();render()}});
+ stats(y,m,days);
+}
+function stats(y,m,days){
+ let yes=0,no=0; const all=[];
+ state.tasks.forEach((t,ti)=>{for(let d=1;d<=days;d++){let v=state.marks[`${y}-${pad(m+1)}-${pad(d)}|${ti}`]||0;if(v===1)yes++;if(v===2)no++;all.push(v)}});
+ const total=yes+no;document.querySelector('#rate').textContent=total?Math.round(yes/total*100)+'%':'0%';document.querySelector('#done').textContent=yes;document.querySelector('#miss').textContent=no;
+ let best=0,cur=0;all.forEach(v=>{if(v===1){cur++;best=Math.max(best,cur)}else cur=0});document.querySelector('#streak').textContent=best;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+document.querySelector('#add').onsubmit=e=>{e.preventDefault();state.tasks.push({name:document.querySelector('#task').value.trim(),time:document.querySelector('#time').value.trim()});document.querySelector('#task').value='';document.querySelector('#time').value='';save();render()};
+document.querySelector('#prev').onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+document.querySelector('#next').onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+monthInput.onchange=()=>{let [y,m]=monthInput.value.split('-').map(Number);view=new Date(y,m-1,1);render()};
+render();
+</script>
+</body>
+</html>
