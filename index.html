@@ -646,6 +646,7 @@ const friendMessage = document.querySelector("#friendMessage");
       };
 friendsBtn.onclick = () => {
   friendsPanel.classList.remove("hidden");
+  loadFriendRequests();
 };
 async function loadFriendRequests() {
 
