@@ -1058,6 +1058,463 @@ function checkExpiredTasks(){
 
 
 setInterval(checkExpiredTasks,30000);
+  /* =========================================================
+   CAMERA VERIFICATION
+   ========================================================= */
+
+let verificationRunning = false;
+let verificationStream = null;
+let verificationTimer = null;
+
+function createVerificationBox(){
+
+  if(document.getElementById("verificationBox")) return;
+
+  const box = document.createElement("div");
+
+  box.id = "verificationBox";
+
+  box.innerHTML = `
+    <div style="
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.75);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:99999;
+      padding:20px;
+    ">
+
+      <div style="
+        width:min(520px,95vw);
+        background:white;
+        border-radius:18px;
+        padding:20px;
+        text-align:center;
+        box-shadow:0 20px 60px rgba(0,0,0,.4);
+      ">
+
+        <h2 style="margin-top:0">
+          🏃 Activity Verification
+        </h2>
+
+        <p id="verifyMessage">
+          Camera start ho rahi hai...
+        </p>
+
+        <video
+          id="verifyVideo"
+          autoplay
+          muted
+          playsinline
+          style="
+            width:100%;
+            max-height:300px;
+            object-fit:cover;
+            border-radius:14px;
+            background:#111;
+          ">
+        </video>
+
+        <div style="
+          margin-top:15px;
+          height:12px;
+          background:#eee;
+          border-radius:10px;
+          overflow:hidden;
+        ">
+          <div id="verifyProgress"
+            style="
+              width:0%;
+              height:100%;
+              background:#22a060;
+              transition:.3s;
+            ">
+          </div>
+        </div>
+
+        <p id="verifyStatus">
+          Movement detect hone ka wait...
+        </p>
+
+        <button
+          id="cancelVerification"
+          style="
+            padding:10px 20px;
+            border-radius:10px;
+            border:1px solid #ccc;
+            background:white;
+            cursor:pointer;
+          ">
+          Cancel
+        </button>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(box);
+
+  document
+    .getElementById("cancelVerification")
+    .onclick = closeVerification;
+}
+
+
+function closeVerification(){
+
+  if(verificationStream){
+
+    verificationStream
+      .getTracks()
+      .forEach(track => track.stop());
+
+    verificationStream = null;
+  }
+
+  if(verificationTimer){
+
+    clearInterval(verificationTimer);
+    verificationTimer = null;
+  }
+
+  const box = document.getElementById("verificationBox");
+
+  if(box)
+    box.remove();
+
+  verificationRunning = false;
+}
+
+
+/*
+   Basic camera movement verification.
+
+   Ye camera frames ke beech movement detect karta hai.
+   Ye kisi person ko 100% "running" prove nahi karta.
+*/
+async function startCameraVerification(k){
+
+  if(verificationRunning) return;
+
+  verificationRunning = true;
+
+  createVerificationBox();
+
+  const video =
+    document.getElementById("verifyVideo");
+
+  const message =
+    document.getElementById("verifyMessage");
+
+  const status =
+    document.getElementById("verifyStatus");
+
+  const progress =
+    document.getElementById("verifyProgress");
+
+  try{
+
+    verificationStream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video:{
+          facingMode:"user",
+          width:{ideal:640},
+          height:{ideal:480}
+        },
+
+        audio:false
+
+      });
+
+    video.srcObject = verificationStream;
+
+    await video.play();
+
+    message.textContent =
+      "Camera on hai. Ab activity karo.";
+
+    status.textContent =
+      "Movement detect ho raha hai...";
+
+    const canvas =
+      document.createElement("canvas");
+
+    const ctx =
+      canvas.getContext("2d");
+
+    canvas.width = 160;
+    canvas.height = 120;
+
+    let previousFrame = null;
+
+    let movementScore = 0;
+
+    const requiredScore = 35;
+
+    verificationTimer =
+      setInterval(async ()=>{
+
+        if(!video.videoWidth) return;
+
+        ctx.drawImage(
+          video,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        const frame =
+          ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+        if(previousFrame){
+
+          let difference = 0;
+
+          for(
+            let i=0;
+            i<frame.data.length;
+            i+=16
+          ){
+
+            difference +=
+              Math.abs(
+                frame.data[i] -
+                previousFrame.data[i]
+              );
+
+          }
+
+          difference /=
+            (frame.data.length / 16);
+
+          /*
+             Threshold intentionally moderate,
+             so normal camera movement can count.
+          */
+
+          if(difference > 12){
+
+            movementScore += 2;
+
+          }else{
+
+            movementScore =
+              Math.max(
+                0,
+                movementScore - .5
+              );
+
+          }
+
+          const percent =
+            Math.min(
+              100,
+              (movementScore /
+              requiredScore) * 100
+            );
+
+          progress.style.width =
+            percent + "%";
+
+          status.textContent =
+            `Activity detected: ${Math.round(percent)}%`;
+
+          if(movementScore >= requiredScore){
+
+            clearInterval(verificationTimer);
+
+            verificationTimer = null;
+
+            status.textContent =
+              "✅ Verification successful!";
+
+            progress.style.width =
+              "100%";
+
+            setTimeout(async ()=>{
+
+              closeVerification();
+
+              /*
+                 Automatically mark COMPLETE.
+              */
+
+              await saveMark(k,1);
+
+            },800);
+
+          }
+
+        }
+
+        previousFrame =
+          frame;
+
+      },500);
+
+  }catch(error){
+
+    console.error(error);
+
+    message.textContent =
+      "Camera permission required.";
+
+    status.textContent =
+      "Camera allow karo aur dobara try karo.";
+
+  }
+
+}
+
+
+/* =========================================================
+   BLOCK MANUAL TICK / CROSS
+   ========================================================= */
+
+document.addEventListener(
+  "click",
+  function(event){
+
+    const button =
+      event.target.closest("[data-k]");
+
+    if(!button) return;
+
+    /*
+       Existing manual marking ko rok do.
+    */
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const k =
+      button.dataset.k;
+
+    if(!k) return;
+
+    /*
+       Agar already complete hai
+       to kuch nahi karna.
+    */
+
+    if(marks[k] === 1)
+      return;
+
+    /*
+       Verification window check.
+    */
+
+    const parts =
+      k.split("|");
+
+    const taskId =
+      parts[0];
+
+    const date =
+      parts[1];
+
+    const task =
+      tasks.find(
+        t => String(t.id) === String(taskId)
+      );
+
+    if(!task) return;
+
+    const status =
+      getVerificationStatus(task,date);
+
+    if(status === "window"){
+
+      startCameraVerification(k);
+
+    }else if(status === "future"){
+
+      alert(
+        "⏰ Verification task ke time par available hoga."
+      );
+
+    }else if(status === "before"){
+
+      alert(
+        "⏰ Verification window abhi start nahi hui."
+      );
+
+    }else if(status === "expired"){
+
+      alert(
+        "❌ Verification time khatam ho gaya."
+      );
+
+    }
+
+  },
+  true
+);
+
+
+/* =========================================================
+   AUTOMATIC VERIFICATION WINDOW CHECK
+   ========================================================= */
+
+function checkVerificationWindows(){
+
+  if(!user || !tasks.length)
+    return;
+
+  const today =
+    dateKey(new Date());
+
+  tasks.forEach(task => {
+
+    const k =
+      `${task.id}|${today}`;
+
+    /*
+       Already complete hai to ignore.
+    */
+
+    if(marks[k] === 1)
+      return;
+
+    const status =
+      getVerificationStatus(task,today);
+
+    /*
+       Verification window start hote hi
+       automatically camera open hoga.
+    */
+
+    if(
+      status === "window" &&
+      !verificationRunning
+    ){
+
+      startCameraVerification(k);
+
+    }
+
+  });
+
+}
+
+
+/*
+   Har 10 second status check.
+*/
+
+setInterval(
+  checkVerificationWindows,
+  10000
+);
 async function saveMark(k,value){
 
   const [taskId,date] =
