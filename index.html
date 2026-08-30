@@ -657,7 +657,39 @@ logoutBtn.onclick = async () => {
 /* =========================================================
    START APP
    ========================================================= */
+async function ensureProfile(currentUser){
 
+  if(!currentUser) return;
+
+  const { data: existing, error: findError } =
+    await db
+      .from("profiles")
+      .select("*")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+  if(findError) throw findError;
+
+  if(!existing){
+
+    const username =
+      currentUser.email
+        ? currentUser.email.split("@")[0]
+        : "User";
+
+    const { error: insertError } =
+      await db
+        .from("profiles")
+        .insert({
+          id: currentUser.id,
+          username: username,
+          rank: "A",
+          lives: 3
+        });
+
+    if(insertError) throw insertError;
+  }
+}
 async function startApp(currentUser){
 
   user = currentUser;
