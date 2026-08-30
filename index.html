@@ -418,7 +418,56 @@ td:last-child,th:last-child{border-right:0}
     </div>
 
   </div>
+<!-- FRIENDS DASHBOARD -->
 
+<div id="friendsPanel" class="panel hidden">
+
+  <div class="friends-head">
+    <div>
+      <h2>👥 Friends</h2>
+      <p class="sub">Friends ke saath apni progress compare karo.</p>
+    </div>
+
+    <button id="closeFriends">✕ Close</button>
+  </div>
+
+  <div class="friends-search">
+
+    <input
+      id="friendSearch"
+      type="email"
+      placeholder="Friend ka email"
+    >
+
+    <button id="sendFriendRequest">
+      ➕ Send Request
+    </button>
+
+  </div>
+
+  <div id="friendMessage" class="sub"></div>
+
+  <div class="friends-section">
+
+    <h3>📨 Friend Requests</h3>
+
+    <div id="friendRequests">
+      <p class="empty">Koi pending request nahi hai.</p>
+    </div>
+
+  </div>
+
+  <div class="friends-section">
+
+    <h3>🏆 My Friends</h3>
+
+    <div id="friendsList">
+      <p class="empty">Abhi koi friend nahi hai.</p>
+    </div>
+
+  </div>
+
+</div>
   <div class="controls" style="justify-content:center;margin-bottom:18px">
     <button id="prev">‹</button>
     <input id="month" type="month">
