@@ -647,7 +647,84 @@ const friendMessage = document.querySelector("#friendMessage");
 friendsBtn.onclick = () => {
   friendsPanel.classList.remove("hidden");
 };
+async function loadFriendRequests() {
 
+  if(!user) return;
+
+  const { data, error } = await db
+    .from("friend_requests")
+    .select("id, sender_id, status")
+    .eq("receiver_id", user.id)
+    .eq("status", "pending");
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  const requestsBox = document.querySelector("#friendRequests");
+
+  if(!requestsBox) return;
+
+  if(!data || data.length === 0){
+    requestsBox.innerHTML = "Koi pending request nahi hai.";
+    return;
+  }
+
+  requestsBox.innerHTML = "";
+
+  for(const request of data){
+
+    const { data: sender } = await db
+      .from("profiles")
+      .select("username, email")
+      .eq("id", request.sender_id)
+      .maybeSingle();
+
+    if(!sender) continue;
+
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+      <div>
+        <b>${sender.username || sender.email}</b>
+        <button onclick="acceptFriendRequest('${request.id}', '${request.sender_id}')">
+          Accept
+        </button>
+      </div>
+    `;
+
+    requestsBox.appendChild(div);
+  }
+}
+  async function acceptFriendRequest(requestId, senderId){
+
+  if(!user) return;
+
+  const { error: requestError } = await db
+    .from("friend_requests")
+    .update({ status: "accepted" })
+    .eq("id", requestId);
+
+  if(requestError){
+    console.error(requestError);
+    return;
+  }
+
+  const { error: friendError } = await db
+    .from("friendships")
+    .insert({
+      user_id: user.id,
+      friend_id: senderId
+    });
+
+  if(friendError){
+    console.error(friendError);
+    return;
+  }
+
+  loadFriendRequests();
+  }
 closeFriends.onclick = () => {
   friendsPanel.classList.add("hidden");
 };
