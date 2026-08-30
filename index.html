@@ -582,7 +582,68 @@ const logoutBtn = document.querySelector("#logout");
 const friendsBtn = document.querySelector("#friendsBtn");  
   const friendsPanel = document.querySelector("#friendsPanel");
 const closeFriends = document.querySelector("#closeFriends");
+const friendSearch = document.querySelector("#friendSearch");
+const sendFriendRequest = document.querySelector("#sendFriendRequest");
+const friendMessage = document.querySelector("#friendMessage");
+  sendFriendRequest.onclick = async () => {
+  const email = friendSearch.value.trim().toLowerCase();
 
+  if(!email){
+    friendMessage.textContent = "Friend ka email bharo.";
+    return;
+  }
+
+  if(!user){
+    friendMessage.textContent = "Pehle login karo.";
+    return;
+  }if(email === (user.email || "").toLowerCase()){
+  friendMessage.textContent = "Khud ko friend request nahi bhej sakte.";
+  return;
+  }try {
+  const { data: friend, error: findError } =
+    await db
+      .from("profiles")
+      .select("id, username, email")
+      .eq("email", email)
+      .maybeSingle();
+
+  if(findError) throw findError;
+
+  if(!friend){
+    friendMessage.textContent =
+      "Is email se koi account nahi mila.";
+    return;} 
+    const { data: existingRequest, error: requestError } =
+    await db
+      .from("friend_requests")
+      .select("id, status")
+      .eq("sender_id", user.id)
+      .eq("receiver_id", friend.id)
+      .maybeSingle();
+
+  if(requestError) throw requestError;
+
+  if(existingRequest){
+    friendMessage.textContent =
+      "Friend request already bheji ja chuki hai.";
+    return;
+  }     const { error: insertError } =
+      await db
+        .from("friend_requests")
+        .insert({
+          sender_id: user.id,
+          receiver_id: friend.id,
+          status: "pending"
+        });
+
+    if(insertError) throw insertError;
+
+    friendMessage.textContent = "Friend request bhej di gayi.";
+        }catch(error){
+      console.error(error);
+      friendMessage.textContent = "Friend request bhejne me error aaya.";
+        }
+      };
 friendsBtn.onclick = () => {
   friendsPanel.classList.remove("hidden");
 };
