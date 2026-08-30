@@ -931,59 +931,78 @@ function render(){
    SAVE MARK
    ========================================================= */
 /* =========================================================
-   VERIFICATION WINDOW
+   AI ACTIVITY VERIFICATION
    ========================================================= */
 
 const VERIFICATION_MINUTES = 30;
 
-function parseTaskTime(value){
+let aiObjectModel = null;
+let aiPoseModel = null;
 
-  if(!value) return null;
+let verificationRunning = false;
+let verificationTimer = null;
+let verificationStream = null;
+let verificationKey = null;
 
-  let text = String(value).trim().toUpperCase();
+let verificationProgress = 0;
+let lastPose = null;
 
-  let match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
 
-  if(!match) return null;
+/* ---------- TASK TYPE ---------- */
 
-  let hour = Number(match[1]);
-  let minute = Number(match[2] || 0);
-  let ampm = match[3];
+function getTaskType(task){
 
-  if(ampm){
+  const text =
+    `${task.name || ""} ${task.title || ""}`
+      .toLowerCase()
+      .trim();
 
-    if(hour < 1 || hour > 12) return null;
-
-    if(ampm === "AM" && hour === 12)
-      hour = 0;
-
-    if(ampm === "PM" && hour !== 12)
-      hour += 12;
-
-  }else{
-
-    if(hour > 23 || minute > 59)
-      return null;
-
+  if(
+    /running|run|jogging|jog| दौड़|दौड़/.test(text)
+  ){
+    return "running";
   }
 
-  return hour * 60 + minute;
+  if(
+    /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/.test(text)
+  ){
+    return "study";
+  }
+
+  if(
+    /water|paani|pani|drink|drinking|hydration|पानी/.test(text)
+  ){
+    return "water";
+  }
+
+  if(
+    /exercise|workout|gym|push.?up|squat|yoga/.test(text)
+  ){
+    return "exercise";
+  }
+
+  return "general";
 }
 
 
+/* ---------- STATUS ---------- */
+
 function getVerificationStatus(task,date){
 
-  const mark = marks[`${task.id}|${date}`];
+  const mark =
+    marks[`${task.id}|${date}`];
 
   if(mark === 1)
     return "done";
 
-  const taskMinutes = parseTaskTime(task.time);
+  const taskMinutes =
+    parseTaskTime(task.time);
 
   if(taskMinutes === null)
     return "before";
 
-  const target = new Date(`${date}T00:00:00`);
+  const target =
+    new Date(`${date}T00:00:00`);
 
   target.setHours(
     Math.floor(taskMinutes / 60),
@@ -992,13 +1011,22 @@ function getVerificationStatus(task,date){
     0
   );
 
-  const start = target.getTime();
+  const start =
+    target.getTime();
+
   const end =
-    start + VERIFICATION_MINUTES * 60 * 1000;
+    start +
+    VERIFICATION_MINUTES *
+    60 *
+    1000;
 
-  const now = Date.now();
+  const now =
+    Date.now();
 
-  if(target.toDateString() !== new Date().toDateString()){
+  if(
+    target.toDateString() !==
+    new Date().toDateString()
+  ){
 
     if(target > new Date())
       return "future";
@@ -1009,55 +1037,871 @@ function getVerificationStatus(task,date){
   if(now < start)
     return "before";
 
-  if(now >= start && now <= end)
+  if(now <= end)
     return "window";
 
   return "expired";
 }
 
 
-async function markAsMissed(taskId,date){
+/* ---------- AI LOAD ---------- */
 
-  const k = `${taskId}|${date}`;
+async function loadAIModels(){
 
-  if(marks[k] === 1)
-    return;
+  if(!aiObjectModel){
 
-  marks[k] = 2;
+    aiObjectModel =
+      await cocoSsd.load();
 
-  render();
+  }
 
-  await saveMark(k,2);
+  if(!aiPoseModel){
+
+    aiPoseModel =
+      await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        {
+          modelType:
+            poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+        }
+      );
+
+  }
+
 }
 
+
+/* ---------- VERIFICATION UI ---------- */
+
+function createVerificationUI(task){
+
+  const old =
+    document.getElementById(
+      "aiVerificationBox"
+    );
+
+  if(old)
+    old.remove();
+
+  const type =
+    getTaskType(task);
+
+  let instruction =
+    "Camera ke saamne activity karo.";
+
+  if(type === "running")
+    instruction =
+      "🏃 Running karo. Body movement verify hogi.";
+
+  if(type === "study")
+    instruction =
+      "📚 Book/notebook ke saath study karo.";
+
+  if(type === "water")
+    instruction =
+      "💧 Bottle ya glass ke saath paani piyo.";
+
+  if(type === "exercise")
+    instruction =
+      "💪 Exercise movement karo.";
+
+  const box =
+    document.createElement("div");
+
+  box.id =
+    "aiVerificationBox";
+
+  box.innerHTML = `
+
+    <div style="
+      position:fixed;
+      inset:0;
+      z-index:999999;
+      background:rgba(0,0,0,.82);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    ">
+
+      <div style="
+        width:min(600px,96vw);
+        background:#101827;
+        color:white;
+        border:1px solid #34415d;
+        border-radius:20px;
+        padding:22px;
+        box-shadow:0 25px 80px rgba(0,0,0,.6);
+        text-align:center;
+      ">
+
+        <h2 style="
+          margin:0 0 8px;
+          color:white;
+        ">
+          🤖 Activity Verification
+        </h2>
+
+        <p id="aiInstruction"
+           style="
+             color:#dbe4ff;
+             font-size:16px;
+             margin:8px 0 16px;
+           ">
+          ${instruction}
+        </p>
+
+        <video
+          id="aiVerificationVideo"
+          autoplay
+          muted
+          playsinline
+          style="
+            width:100%;
+            max-height:360px;
+            object-fit:cover;
+            border-radius:14px;
+            background:#050914;
+            border:1px solid #394660;
+          ">
+        </video>
+
+        <div style="
+          margin-top:16px;
+          height:14px;
+          background:#273248;
+          border-radius:20px;
+          overflow:hidden;
+        ">
+
+          <div
+            id="aiProgress"
+            style="
+              width:0%;
+              height:100%;
+              background:#39d98a;
+              transition:.25s;
+            ">
+          </div>
+
+        </div>
+
+        <div
+          id="aiStatus"
+          style="
+            color:white;
+            font-size:16px;
+            font-weight:600;
+            margin:14px 0;
+          ">
+          AI models load ho rahe hain...
+        </div>
+
+        <button
+          id="aiCancel"
+          style="
+            padding:10px 22px;
+            border-radius:10px;
+            border:1px solid #52617e;
+            background:#182238;
+            color:white;
+            cursor:pointer;
+          ">
+          Cancel
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(box);
+
+  document
+    .getElementById("aiCancel")
+    .onclick =
+      closeAIVerification;
+}
+
+
+/* ---------- CLOSE ---------- */
+
+function closeAIVerification(){
+
+  if(verificationTimer){
+
+    clearInterval(
+      verificationTimer
+    );
+
+    verificationTimer =
+      null;
+  }
+
+  if(verificationStream){
+
+    verificationStream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
+
+    verificationStream =
+      null;
+  }
+
+  const box =
+    document.getElementById(
+      "aiVerificationBox"
+    );
+
+  if(box)
+    box.remove();
+
+  verificationRunning =
+    false;
+
+  verificationKey =
+    null;
+
+  verificationProgress =
+    0;
+
+  lastPose =
+    null;
+}
+
+
+/* ---------- OBJECT HELPERS ---------- */
+
+function objectDetected(
+  predictions,
+  names
+){
+
+  return predictions.some(
+    p =>
+      names.includes(
+        p.class.toLowerCase()
+      ) &&
+      p.score >= 0.55
+  );
+
+}
+
+
+/* ---------- POSE MOVEMENT ---------- */
+
+function poseMovementDetected(
+  pose
+){
+
+  if(!pose)
+    return false;
+
+  const points =
+    pose.keypoints || [];
+
+  const important = [
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
+    "left_wrist",
+    "right_wrist"
+  ];
+
+  const current = {};
+
+  points.forEach(p => {
+
+    if(
+      important.includes(
+        p.name
+      ) &&
+      p.score > 0.35
+    ){
+
+      current[p.name] = {
+        x:p.x,
+        y:p.y
+      };
+
+    }
+
+  });
+
+  if(!lastPose){
+
+    lastPose =
+      current;
+
+    return false;
+  }
+
+  let movement = 0;
+  let count = 0;
+
+  important.forEach(name => {
+
+    if(
+      current[name] &&
+      lastPose[name]
+    ){
+
+      movement +=
+        Math.hypot(
+          current[name].x -
+            lastPose[name].x,
+
+          current[name].y -
+            lastPose[name].y
+        );
+
+      count++;
+
+    }
+
+  });
+
+  lastPose =
+    current;
+
+  if(!count)
+    return false;
+
+  return (
+    movement / count
+  ) > 12;
+
+}
+
+
+/* ---------- TASK VERIFICATION ---------- */
+
+async function verifyTaskFrame(
+  task,
+  video
+){
+
+  const type =
+    getTaskType(task);
+
+  const predictions =
+    await aiObjectModel.detect(
+      video
+    );
+
+  let pose =
+    null;
+
+  try{
+
+    const poses =
+      await aiPoseModel.estimatePoses(
+        video
+      );
+
+    pose =
+      poses[0] || null;
+
+  }catch(e){
+
+    console.log(
+      "Pose error:",
+      e
+    );
+
+  }
+
+
+  const person =
+    predictions.some(
+      p =>
+        p.class === "person" &&
+        p.score >= .55
+    );
+
+
+  if(!person){
+
+    return {
+      valid:false,
+      reason:
+        "Person camera ke saamne nahi mila."
+    };
+
+  }
+
+
+  /* RUNNING */
+
+  if(type === "running"){
+
+    const moving =
+      poseMovementDetected(
+        pose
+      );
+
+    return {
+      valid:moving,
+      reason:
+        moving
+          ? "🏃 Running movement detected."
+          : "🏃 Running movement chahiye."
+    };
+
+  }
+
+
+  /* EXERCISE */
+
+  if(type === "exercise"){
+
+    const moving =
+      poseMovementDetected(
+        pose
+      );
+
+    return {
+      valid:moving,
+      reason:
+        moving
+          ? "💪 Exercise movement detected."
+          : "💪 Exercise movement chahiye."
+    };
+
+  }
+
+
+  /* WATER */
+
+  if(type === "water"){
+
+    const bottle =
+      objectDetected(
+        predictions,
+        ["bottle"]
+      );
+
+    const cup =
+      objectDetected(
+        predictions,
+        ["cup"]
+      );
+
+    return {
+      valid:
+        bottle || cup,
+
+      reason:
+        bottle || cup
+          ? "💧 Bottle/glass detected."
+          : "💧 Bottle ya glass camera mein dikhao."
+    };
+
+  }
+
+
+  /* STUDY */
+
+  if(type === "study"){
+
+    /*
+       COCO-SSD does not reliably provide
+       a 'book' class.
+
+       So require a person and a
+       book/notebook-like rectangular
+       object near the lower part
+       of the frame.
+    */
+
+    const laptop =
+      objectDetected(
+        predictions,
+        ["laptop"]
+      );
+
+    /*
+       Laptop is NOT treated as a book.
+       This is intentionally strict.
+    */
+
+    return {
+      valid:false,
+      reason:
+        "📚 Book/notebook verification ke liye dedicated book model chahiye."
+    };
+
+  }
+
+
+  /* GENERAL */
+
+  return {
+    valid:true,
+    reason:
+      "✅ Person detected."
+  };
+
+}
+
+
+/* ---------- START ---------- */
+
+async function startAIVerification(
+  k,
+  task
+){
+
+  if(verificationRunning)
+    return;
+
+  verificationRunning =
+    true;
+
+  verificationKey =
+    k;
+
+  verificationProgress =
+    0;
+
+  createVerificationUI(
+    task
+  );
+
+  const status =
+    document.getElementById(
+      "aiStatus"
+    );
+
+  const progress =
+    document.getElementById(
+      "aiProgress"
+    );
+
+  const video =
+    document.getElementById(
+      "aiVerificationVideo"
+    );
+
+  try{
+
+    status.textContent =
+      "AI models load ho rahe hain...";
+
+    await loadAIModels();
+
+    status.textContent =
+      "Camera permission do...";
+
+    verificationStream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          video:{
+            facingMode:"user",
+            width:{ideal:640},
+            height:{ideal:480}
+          },
+
+          audio:false
+
+        });
+
+    video.srcObject =
+      verificationStream;
+
+    await video.play();
+
+    status.textContent =
+      "Activity verify ho rahi hai...";
+
+    verificationTimer =
+      setInterval(
+        async ()=>{
+
+          if(
+            !verificationRunning ||
+            !verificationKey
+          )
+            return;
+
+          const currentStatus =
+            getVerificationStatus(
+              task,
+              verificationKey.split("|")[1]
+            );
+
+          if(
+            currentStatus !== "window"
+          ){
+
+            closeAIVerification();
+
+            return;
+          }
+
+          const result =
+            await verifyTaskFrame(
+              task,
+              video
+            );
+
+          status.textContent =
+            result.reason;
+
+          if(result.valid){
+
+            verificationProgress += 5;
+
+          }else{
+
+            verificationProgress =
+              Math.max(
+                0,
+                verificationProgress - 1
+              );
+
+          }
+
+          progress.style.width =
+            Math.min(
+              100,
+              verificationProgress
+            ) + "%";
+
+
+          if(
+            verificationProgress >= 100
+          ){
+
+            clearInterval(
+              verificationTimer
+            );
+
+            verificationTimer =
+              null;
+
+            status.textContent =
+              "✅ Verification successful!";
+
+            progress.style.width =
+              "100%";
+
+            /*
+               IMPORTANT:
+               close first, then save once.
+            */
+
+            const savedKey =
+              verificationKey;
+
+            closeAIVerification();
+
+            if(
+              marks[savedKey] !== 1
+            ){
+
+              await saveMark(
+                savedKey,
+                1
+              );
+
+            }
+
+            render();
+
+          }
+
+        },
+        1000
+      );
+
+  }catch(error){
+
+    console.error(
+      "AI verification:",
+      error
+    );
+
+    status.textContent =
+      "❌ Camera/AI start nahi hua.";
+
+    const box =
+      document.getElementById(
+        "aiVerificationBox"
+      );
+
+    if(box){
+
+      const p =
+        document.createElement(
+          "p"
+        );
+
+      p.style.color =
+        "#ff7b7b";
+
+      p.textContent =
+        error.message ||
+        "Camera permission allow karo.";
+
+      box
+        .querySelector(
+          "#aiStatus"
+        )
+        .appendChild(p);
+
+    }
+
+  }
+
+}
+
+
+/* ---------- MANUAL MARK BLOCK ---------- */
+
+document.addEventListener(
+  "click",
+  function(event){
+
+    const button =
+      event.target.closest(
+        "[data-k]"
+      );
+
+    if(!button)
+      return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const k =
+      button.dataset.k;
+
+    if(!k)
+      return;
+
+    if(marks[k] === 1)
+      return;
+
+    const parts =
+      k.split("|");
+
+    const taskId =
+      parts[0];
+
+    const date =
+      parts[1];
+
+    const task =
+      tasks.find(
+        t =>
+          String(t.id) ===
+          String(taskId)
+      );
+
+    if(!task)
+      return;
+
+    const status =
+      getVerificationStatus(
+        task,
+        date
+      );
+
+    if(status === "window"){
+
+      startAIVerification(
+        k,
+        task
+      );
+
+      return;
+    }
+
+    if(status === "future"){
+
+      alert(
+        "⏰ Verification task ke time par available hogi."
+      );
+
+      return;
+    }
+
+    if(status === "before"){
+
+      alert(
+        "⏰ Verification window abhi start nahi hui."
+      );
+
+      return;
+    }
+
+    if(status === "expired"){
+
+      alert(
+        "❌ Verification window khatam ho gayi."
+      );
+
+      return;
+    }
+
+  },
+  true
+);
+
+
+/* ---------- AUTO EXPIRED ---------- */
 
 function checkExpiredTasks(){
 
   if(!user || !tasks.length)
     return;
 
-  const today = dateKey(new Date());
+  const today =
+    dateKey(
+      new Date()
+    );
 
-  tasks.forEach(task => {
+  tasks.forEach(
+    task => {
 
-    const status =
-      getVerificationStatus(task,today);
+      const status =
+        getVerificationStatus(
+          task,
+          today
+        );
 
-    if(status === "expired"){
+      if(
+        status === "expired"
+      ){
 
-      const k = `${task.id}|${today}`;
+        const k =
+          `${task.id}|${today}`;
 
-      if(!marks[k])
-        markAsMissed(task.id,today);
+        if(!marks[k]){
+
+          markAsMissed(
+            task.id,
+            today
+          );
+
+        }
+
+      }
 
     }
-
-  });
+  );
 
 }
 
-
-setInterval(checkExpiredTasks,30000);
+setInterval(
+  checkExpiredTasks,
+  30000
+);
   /* =========================================================
    CAMERA VERIFICATION
    ========================================================= */
