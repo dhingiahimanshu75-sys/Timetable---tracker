@@ -750,6 +750,17 @@ async function ensureProfile(currentUser){
         });
 
     if(insertError) throw insertError;
+  }if(existing && !existing.email){
+
+  const { error: updateError } =
+    await db
+      .from("profiles")
+      .update({
+        email: currentUser.email
+      })
+      .eq("id", currentUser.id);
+
+  if(updateError) throw updateError;
   }
 }
 async function startApp(currentUser){
