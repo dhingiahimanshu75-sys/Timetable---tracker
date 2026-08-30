@@ -579,7 +579,18 @@ const loginText = document.querySelector("#loginText");
 
 const userEmail = document.querySelector("#userEmail");
 const logoutBtn = document.querySelector("#logout");
-const friendsBtn = document.querySelector("#friendsBtn");
+const friendsBtn = document.querySelector("#friendsBtn");  
+  const friendsPanel = document.querySelector("#friendsPanel");
+const closeFriends = document.querySelector("#closeFriends");
+
+friendsBtn.onclick = () => {
+  friendsPanel.classList.remove("hidden");
+};
+
+closeFriends.onclick = () => {
+  friendsPanel.classList.add("hidden");
+};
+
 const monthInput = document.querySelector("#month");
 const monthTitle = document.querySelector("#monthTitle");
 
