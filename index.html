@@ -744,6 +744,7 @@ async function ensureProfile(currentUser){
         .insert({
           id: currentUser.id,
           username: username,
+        email: currentUser.email,  
           rank: "A",
           lives: 3
         });
