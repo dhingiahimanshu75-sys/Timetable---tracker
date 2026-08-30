@@ -724,8 +724,60 @@ async function loadFriendRequests() {
     return;
   }
 
-  loadFriendRequests();
+ loadFriendRequests();
+loadFriends();
+
+}
+
+async function loadFriends(){
+
+  if(!user) return;
+
+  const friendsList = document.querySelector("#friendsList");
+
+  if(!friendsList) return;
+
+  const { data, error } = await db
+    .from("friendships")
+    .select("friend_id")
+    .eq("user_id", user.id);
+
+  if(error){
+    console.error(error);
+    return;
   }
+
+  if(!data || data.length === 0){
+    friendsList.innerHTML =
+      '<p class="empty">Abhi koi friend nahi hai.</p>';
+    return;
+  }
+
+  friendsList.innerHTML = "";
+
+  for(const friendship of data){
+
+    const { data: friend, error: friendError } = await db
+      .from("profiles")
+      .select("username, email")
+      .eq("id", friendship.friend_id)
+      .maybeSingle();
+
+    if(friendError || !friend) continue;
+
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+      <div>
+        <b>${friend.username || friend.email}</b>
+        <span>${friend.email}</span>
+      </div>
+    `;
+
+    friendsList.appendChild(div);
+  }
+  } 
+
 closeFriends.onclick = () => {
   friendsPanel.classList.add("hidden");
 };
