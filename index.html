@@ -930,7 +930,134 @@ function render(){
 /* =========================================================
    SAVE MARK
    ========================================================= */
+/* =========================================================
+   VERIFICATION WINDOW
+   ========================================================= */
 
+const VERIFICATION_MINUTES = 30;
+
+function parseTaskTime(value){
+
+  if(!value) return null;
+
+  let text = String(value).trim().toUpperCase();
+
+  let match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
+
+  if(!match) return null;
+
+  let hour = Number(match[1]);
+  let minute = Number(match[2] || 0);
+  let ampm = match[3];
+
+  if(ampm){
+
+    if(hour < 1 || hour > 12) return null;
+
+    if(ampm === "AM" && hour === 12)
+      hour = 0;
+
+    if(ampm === "PM" && hour !== 12)
+      hour += 12;
+
+  }else{
+
+    if(hour > 23 || minute > 59)
+      return null;
+
+  }
+
+  return hour * 60 + minute;
+}
+
+
+function getVerificationStatus(task,date){
+
+  const mark = marks[`${task.id}|${date}`];
+
+  if(mark === 1)
+    return "done";
+
+  const taskMinutes = parseTaskTime(task.time);
+
+  if(taskMinutes === null)
+    return "before";
+
+  const target = new Date(`${date}T00:00:00`);
+
+  target.setHours(
+    Math.floor(taskMinutes / 60),
+    taskMinutes % 60,
+    0,
+    0
+  );
+
+  const start = target.getTime();
+  const end =
+    start + VERIFICATION_MINUTES * 60 * 1000;
+
+  const now = Date.now();
+
+  if(target.toDateString() !== new Date().toDateString()){
+
+    if(target > new Date())
+      return "future";
+
+    return "expired";
+  }
+
+  if(now < start)
+    return "before";
+
+  if(now >= start && now <= end)
+    return "window";
+
+  return "expired";
+}
+
+
+async function markAsMissed(taskId,date){
+
+  const k = `${taskId}|${date}`;
+
+  if(marks[k] === 1)
+    return;
+
+  marks[k] = 2;
+
+  render();
+
+  await saveMark(k,2);
+}
+
+
+function checkExpiredTasks(){
+
+  if(!user || !tasks.length)
+    return;
+
+  const today = dateKey(new Date());
+
+  tasks.forEach(task => {
+
+    const status =
+      getVerificationStatus(task,today);
+
+    if(status === "expired"){
+
+      const k = `${task.id}|${today}`;
+
+      if(!marks[k])
+        markAsMissed(task.id,today);
+
+    }
+
+  });
+
+}
+
+
+setInterval(checkExpiredTasks,30000);
 async function saveMark(k,value){
 
   const [taskId,date] =
