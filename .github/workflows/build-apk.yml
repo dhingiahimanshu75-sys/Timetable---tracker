@@ -21,8 +21,14 @@ jobs:
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0 platform-tools'
+      - name: Install Gradle
+        run: sudo apt-get update && sudo apt-get install -y gradle
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 8.9
       - name: Build debug APK
-        run: chmod +x gradlew && ./gradlew assembleDebug
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
