@@ -1697,6 +1697,164 @@ async function verifyFrame(
   video,
   previousPoints
 ){
+  const predictions =
+    await aiObjectModel.detect(video);
+
+  const type =
+    taskType(task);
+
+  // 💧 WATER VERIFICATION
+  // Water task me person detection mandatory nahi hai.
+  if(type === "water"){
+
+    const found =
+      predictions.some(
+        p =>
+          (
+            p.class === "bottle" ||
+            p.class === "cup"
+          ) &&
+          p.score >= 0.30
+      );
+
+    return {
+      valid: found,
+      points: previousPoints,
+      reason: found
+        ? "✅ Bottle/cup detected."
+        : "💧 Bottle ya cup camera me clearly dikhao."
+    };
+  }
+
+  // 👤 Person detection for other tasks
+  const person =
+    predictions.some(
+      p =>
+        p.class === "person" &&
+        p.score >= 0.45
+    );
+
+  if(!person){
+    return {
+      valid:false,
+      points:previousPoints,
+      reason:"🙂 Camera me person clearly dikhao."
+    };
+  }
+
+  // 🙂 GENERAL
+  if(type === "general"){
+    return {
+      valid:true,
+      points:previousPoints,
+      reason:"✅ Person detected."
+    };
+  }
+
+  // 📚 STUDY
+  if(type === "study"){
+
+    const studyObject =
+      predictions.some(
+        p =>
+          p.class === "laptop" &&
+          p.score >= 0.35
+      );
+
+    return {
+      valid:studyObject,
+      points:previousPoints,
+      reason:studyObject
+        ? "✅ Study setup detected."
+        : "📚 Laptop/study setup camera me dikhao."
+    };
+  }
+
+  // 🏃 RUNNING / 💪 EXERCISE
+  let points = null;
+
+  try{
+    const poses =
+      await aiPoseModel.estimatePoses(video);
+
+    points =
+      (
+        poses[0]?.keypoints ||
+        []
+      )
+      .filter(
+        p =>
+          p.score > 0.30
+      )
+      .reduce(
+        (
+          acc,
+          p
+        ) => {
+          acc[p.name] = {
+            x:p.x,
+            y:p.y
+          };
+
+          return acc;
+        },
+        {}
+      );
+
+  }catch(error){
+    console.log(
+      "Pose",
+      error
+    );
+  }
+
+  let movement = 0;
+
+  if(
+    previousPoints &&
+    points
+  ){
+
+    let total = 0;
+    let count = 0;
+
+    for(
+      const name of Object.keys(points)
+    ){
+
+      if(
+        previousPoints[name]
+      ){
+
+        total +=
+          Math.hypot(
+            points[name].x -
+              previousPoints[name].x,
+            points[name].y -
+              previousPoints[name].y
+          );
+
+        count++;
+      }
+    }
+
+    if(count)
+      movement =
+        total / count;
+  }
+
+  return {
+    valid:
+      movement > 3,
+
+    points,
+
+    reason:
+      movement > 12
+        ? "✅ Movement detected."
+        : `🏃 Movement chahiye (${Math.round(movement)}).`
+  };
+}
 
   const predictions=
     await aiObjectModel.detect(
