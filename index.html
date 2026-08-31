@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080d1a">
-
 <title>My Timetable Tracker</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,1480 +12,355 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 
 <style>
-:root{
-  --bg:#080d1a;
-  --card:#111a2d;
-  --card2:#18233b;
-  --text:#f4f7ff;
-  --muted:#8d9ab5;
-  --line:#263552;
-  --accent:#6366f1;
-  --accent2:#818cf8;
-  --good:#22c55e;
-  --bad:#ef4444;
-  --warn:#facc15;
-}
-
-*{
-  box-sizing:border-box;
-}
-
-html,body{
-  margin:0;
-  min-height:100%;
-}
-
-body{
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 15% 0%,#202b61 0%,transparent 35%),
-    radial-gradient(circle at 90% 100%,#172554 0%,transparent 35%),
-    var(--bg);
-}
-
-button,
-input{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-  color:var(--text);
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:11px;
-  padding:10px 14px;
-}
-
-button:hover{
-  background:var(--card2);
-  border-color:var(--accent2);
-}
-
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-
-input{
-  width:100%;
-  color:var(--text);
-  background:#0d1527;
-  border:1px solid var(--line);
-  border-radius:11px;
-  padding:12px 14px;
-  outline:0;
-}
-
-input:focus{
-  border-color:var(--accent2);
-  box-shadow:0 0 0 3px rgba(99,102,241,.14);
-}
-
-input::placeholder{
-  color:#64748b;
-}
-
-.hidden{
-  display:none!important;
-}
-
-.wrap{
-  width:min(1200px,94%);
-  margin:auto;
-  padding:28px 0 50px;
-}
-
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:18px;
-  margin-bottom:18px;
-}
-
-h1{
-  margin:0;
-  font-size:30px;
-  font-weight:800;
-}
-
-h2{
-  margin:0 0 6px;
-}
-
-h3{
-  margin:18px 0 10px;
-}
-
-.sub{
-  color:var(--muted);
-  font-size:13px;
-  margin-top:5px;
-}
-
-.user-area{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.panel{
-  padding:18px;
-  border:1px solid var(--line);
-  border-radius:18px;
-  background:rgba(17,26,45,.92);
-  box-shadow:0 18px 45px rgba(0,0,0,.22);
-  margin-bottom:17px;
-}
-
-.rank-card{
-  display:flex;
-  align-items:center;
-  gap:13px;
-  padding:14px 16px;
-  border:1px solid var(--line);
-  border-radius:16px;
-  background:linear-gradient(145deg,var(--card),#0d1527);
-  margin-bottom:16px;
-}
-
-.rank-code{
-  font-size:30px;
-  font-weight:900;
-  min-width:48px;
-  text-align:center;
-}
-
-.rank-name{
-  font-size:17px;
-  font-weight:800;
-}
-
-.rank-meta{
-  display:block;
-  color:var(--muted);
-  font-size:12px;
-  margin-top:2px;
-}
-
-.rules{
-  padding:12px 14px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:#0d1527;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.6;
-  margin-bottom:16px;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:11px;
-  margin-bottom:17px;
-}
-
-.stat{
-  padding:16px;
-  border:1px solid var(--line);
-  border-radius:15px;
-  background:linear-gradient(145deg,var(--card),#0d1527);
-}
-
-.stat b{
-  display:block;
-  font-size:23px;
-}
-
-.stat span{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.controls{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  margin-bottom:17px;
-}
-
-.controls #month{
-  max-width:280px;
-}
-
-.bar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  margin-bottom:15px;
-}
-
-.bar strong{
-  font-size:18px;
-}
-
-#add{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
-#task{
-  width:190px;
-}
-
-#time{
-  width:150px;
-}
-
-#add button{
-  background:linear-gradient(135deg,var(--accent),#4f46e5);
-  border:0;
-  font-weight:700;
-}
-
-.table-wrap{
-  overflow:auto;
-  border:1px solid var(--line);
-  border-radius:14px;
-}
-
-table{
-  width:100%;
-  min-width:1050px;
-  border-collapse:separate;
-  border-spacing:0;
-}
-
-th{
-  background:#0e1729;
-  color:#aeb9d0;
-  font-size:12px;
-  padding:11px 7px;
-  border-bottom:1px solid var(--line);
-  white-space:nowrap;
-}
-
-td{
-  height:50px;
-  text-align:center;
-  background:#10192c;
-  border-right:1px solid #1d2942;
-  border-bottom:1px solid #1d2942;
-}
-
-td:last-child,
-th:last-child{
-  border-right:0;
-}
-
-.task-name{
-  text-align:left;
-  min-width:155px;
-  padding-left:13px;
-  font-weight:700;
-}
-
-.task-time{
-  min-width:110px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.cell{
-  width:42px;
-  height:40px;
-  padding:0;
-  border:1px solid transparent;
-  border-radius:9px;
-  background:transparent;
-  color:#64748b;
-  font-weight:800;
-}
-
-.cell.complete{
-  color:#4ade80;
-  background:rgba(34,197,94,.10);
-  border-color:rgba(34,197,94,.25);
-}
-
-.cell.missed{
-  color:#f87171;
-  background:rgba(239,68,68,.10);
-  border-color:rgba(239,68,68,.25);
-}
-
-.cell.verify{
-  color:var(--warn);
-  background:rgba(250,204,21,.10);
-  border-color:rgba(250,204,21,.35);
-  animation:pulse 1.2s infinite;
-}
-
-.cell.locked{
-  opacity:.42;
-}
-
-.cell.today{
-  box-shadow:inset 0 0 0 2px var(--accent);
-}
-
-@keyframes pulse{
-  50%{
-    box-shadow:0 0 0 5px rgba(250,204,21,.10);
-  }
-}
-
-.del{
-  color:#f87171;
-  background:transparent;
-  border:0;
-  font-size:12px;
-}
-
-.empty{
-  color:var(--muted);
-  padding:30px 15px;
-  text-align:center;
-}
-
-.friends-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-}
-
-.friend-search{
-  display:flex;
-  gap:8px;
-  margin:14px 0;
-}
-
-.friend-card{
-  padding:13px;
-  margin:8px 0;
-  border:1px solid var(--line);
-  border-radius:13px;
-  background:#0d1527;
-}
-
-.friend-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.friend-compare{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:7px;
-  margin-top:10px;
-}
-
-.mini{
-  padding:8px;
-  border:1px solid var(--line);
-  border-radius:9px;
-  text-align:center;
-}
-
-.mini b{
-  display:block;
-}
-
-.mini span{
-  color:var(--muted);
-  font-size:10px;
-}
-
-.request{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:9px;
-  margin:6px 0;
-}
-
-.small{
-  display:block;
-  color:var(--muted);
-  font-size:11px;
-  margin-top:3px;
-}
-
-.overlay{
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  background:rgba(0,0,0,.84);
-}
-
-.modal{
-  width:min(680px,96vw);
-  max-height:92vh;
-  overflow:auto;
-  padding:18px;
-  border:1px solid #34415d;
-  border-radius:20px;
-  background:#101827;
-  text-align:center;
-  box-shadow:0 25px 80px rgba(0,0,0,.65);
-}
-
-.modal video{
-  width:100%;
-  max-height:380px;
-  object-fit:cover;
-  border-radius:14px;
-  background:#050914;
-  border:1px solid #394660;
-}
-
-.progress{
-  height:13px;
-  background:#273248;
-  border-radius:20px;
-  overflow:hidden;
-  margin:13px 0;
-}
-
-.progress > div{
-  height:100%;
-  width:0;
-  background:#39d98a;
-  transition:.2s;
-}
-
-.actions{
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.success{
-  padding:11px;
-  margin-top:10px;
-  border:1px solid rgba(34,197,94,.25);
-  border-radius:13px;
-  background:rgba(34,197,94,.08);
-}
-
-#celebrate{
-  position:fixed;
-  inset:0;
-  z-index:100000;
-  pointer-events:none;
-  overflow:hidden;
-}
-
-.confetti{
-  position:absolute;
-  font-size:24px;
-  animation:fall 2s ease-out forwards;
-}
-
-.rank-message{
-  position:absolute;
-  top:21%;
-  left:50%;
-  transform:translateX(-50%);
-  white-space:nowrap;
-  font-size:28px;
-  font-weight:900;
-  text-shadow:0 5px 20px rgba(0,0,0,.7);
-}
-
-@keyframes fall{
-  to{
-    transform:translateY(110vh) rotate(720deg);
-    opacity:0;
-  }
-}
-
-.alarm-box{
-  border:1px solid rgba(250,204,21,.35);
-  border-radius:14px;
-  padding:12px;
-  background:rgba(250,204,21,.07);
-}
-
-@media(max-width:1050px){
-  .stats{
-    grid-template-columns:repeat(3,1fr);
-  }
-}
-
-@media(max-width:720px){
-
-  .top,
-  .bar,
-  .friends-head{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .stats{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  #add{
-    flex-wrap:wrap;
-  }
-
-  #add input{
-    flex:1;
-    width:auto!important;
-    min-width:120px;
-  }
-
-  .friend-compare{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .user-area{
-    flex-wrap:wrap;
-  }
-
-  h1{
-    font-size:24px;
-  }
-}
+:root{--bg:#070b15;--card:#111a2d;--card2:#18233b;--text:#f4f7ff;--muted:#8d9ab5;--line:#263552;--accent:#6366f1;--good:#22c55e;--bad:#ef4444;--warn:#facc15}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text)}
+body{background:radial-gradient(circle at 15% 0,#202b61 0,transparent 35%),radial-gradient(circle at 90% 100%,#172554 0,transparent 35%),var(--bg)}
+button,input{font:inherit}button{cursor:pointer;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 14px}button:hover{background:var(--card2);border-color:#818cf8}button:disabled{opacity:.5;cursor:not-allowed}input{width:100%;color:var(--text);background:#0d1527;border:1px solid var(--line);border-radius:11px;padding:12px 14px;outline:0}input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #6366f125}input::placeholder{color:#64748b}.hidden{display:none!important}
+.wrap{width:min(1200px,94%);margin:auto;padding:26px 0 50px}.top,.bar,.friends-head,.friend-top{display:flex;justify-content:space-between;align-items:center;gap:14px}.top{margin-bottom:18px}h1{margin:0;font-size:30px}h2{margin:0 0 6px}h3{margin:18px 0 10px}.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.user-area{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}.panel{padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(17,26,45,.92);box-shadow:0 18px 45px #0004;margin-bottom:17px}
+.rank-card{display:flex;align-items:center;gap:13px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--card),#0d1527);margin-bottom:14px}.rank-code{font-size:32px;font-weight:900;min-width:52px;text-align:center}.rank-name{font-size:18px;font-weight:800}.rank-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.rules{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0d1527;color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:16px}.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:17px}.stat{padding:16px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,var(--card),#0d1527)}.stat b{display:block;font-size:23px}.stat span{font-size:12px;color:var(--muted)}
+.controls{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:17px}.controls input{max-width:280px}.bar{margin-bottom:14px}.bar strong{font-size:18px}#add{display:flex;align-items:center;gap:8px}#task{width:185px}#time{width:150px}#add button{background:linear-gradient(135deg,var(--accent),#4f46e5);border:0;font-weight:700}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;min-width:1050px;border-collapse:separate;border-spacing:0}th{padding:11px 7px;background:#0e1729;color:#aeb9d0;font-size:12px;white-space:nowrap;border-bottom:1px solid var(--line)}td{height:48px;text-align:center;background:#10192c;border-right:1px solid #1d2942;border-bottom:1px solid #1d2942}td:last-child,th:last-child{border-right:0}.task-name{text-align:left;min-width:155px;padding-left:13px;font-weight:700}.task-time{min-width:110px;color:var(--muted);font-size:12px}.cell{width:42px;height:40px;padding:0;border:1px solid transparent;border-radius:9px;background:transparent;color:#64748b;font-weight:800}.cell.complete{color:#4ade80;background:#22c55e14;border-color:#22c55e40}.cell.missed{color:#f87171;background:#ef444414;border-color:#ef444440}.cell.verify{color:var(--warn);background:#facc1514;border-color:#facc1555;animation:pulse 1.2s infinite}.cell.locked{opacity:.35}.cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+@keyframes pulse{50%{box-shadow:0 0 0 5px #facc1514}}
+.del{border:0;background:transparent;color:#f87171;font-size:12px}.empty{color:var(--muted);padding:30px;text-align:center}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login-card{width:min(420px,100%);padding:28px;border:1px solid var(--line);border-radius:22px;background:#111a2df5;box-shadow:0 25px 70px #0007}.login-card h1{font-size:26px;margin-bottom:7px}.login-card p{color:var(--muted);font-size:14px;margin:0 0 20px}.login-card input{margin-bottom:10px}.login-card button{width:100%;background:linear-gradient(135deg,var(--accent),#4f46e5);border:0;font-weight:700}.switch{text-align:center;color:var(--muted);font-size:13px;margin-top:14px;cursor:pointer}
+.friends-head{display:flex}.friend-search{display:flex;gap:8px;margin:14px 0}.friend-card{padding:13px;margin:8px 0;border:1px solid var(--line);border-radius:13px;background:#0d1527}.friend-compare{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.mini{padding:8px;border:1px solid var(--line);border-radius:9px;text-align:center}.mini b{display:block}.mini span{color:var(--muted);font-size:10px}.request{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:9px;margin:6px 0}.small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:#000d}.modal{width:min(680px,96vw);max-height:92vh;overflow:auto;padding:18px;border:1px solid #34415d;border-radius:20px;background:#101827;text-align:center;box-shadow:0 25px 80px #000a}.modal video{width:100%;max-height:390px;object-fit:cover;border-radius:14px;background:#050914;border:1px solid #394660}.progress{height:13px;background:#273248;border-radius:20px;overflow:hidden;margin:13px 0}.progress>div{height:100%;width:0;background:#39d98a;transition:.2s}.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.notice{padding:10px;border:1px solid #facc1540;border-radius:12px;background:#facc150c}
+#celebrate{position:fixed;inset:0;z-index:100000;pointer-events:none;overflow:hidden}.confetti{position:absolute;font-size:24px;animation:fall 2s ease-out forwards}.rank-message{position:absolute;top:20%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:900;white-space:nowrap;text-shadow:0 5px 20px #0008}@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:100001;display:none;max-width:90vw;padding:11px 15px;border:1px solid var(--line);border-radius:12px;background:#121c31;box-shadow:0 15px 40px #0006;text-align:center}
+@media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.top,.bar,.friends-head{flex-direction:column;align-items:stretch}.stats{grid-template-columns:repeat(2,1fr)}#add{flex-wrap:wrap}#add input{flex:1;width:auto!important;min-width:120px}.friend-compare{grid-template-columns:repeat(2,1fr)}.user-area{flex-wrap:wrap}h1{font-size:24px}}
 </style>
 </head>
-
 <body>
 
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
-
     <h1>📅 My Timetable Tracker</h1>
-
-    <p id="loginText">
-      Login karke apna tracker open karo.
-    </p>
-
-    <input
-      id="email"
-      type="email"
-      autocomplete="email"
-      placeholder="Email"
-    >
-
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      placeholder="Password"
-    >
-
-    <button id="authBtn">
-      Login
-    </button>
-
-    <div id="switchAuth" class="switch">
-      Account nahi hai? Signup
-    </div>
-
+    <p id="loginText">Login karke apna tracker open karo.</p>
+    <input id="email" type="email" autocomplete="email" placeholder="Email">
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+    <button id="authBtn">Login</button>
+    <div id="switchAuth" class="switch">Account nahi hai? Signup</div>
   </div>
 </div>
-
 
 <div id="app" class="hidden">
-
   <div class="wrap">
-
     <div class="top">
-
       <div>
         <h1>📅 My Timetable Tracker</h1>
-
-        <div class="sub">
-          ✓ = complete &nbsp;
-          X = missed &nbsp;
-          — = not marked
-        </div>
+        <div class="sub">✓ = complete &nbsp; X = missed &nbsp; — = not marked</div>
       </div>
-
       <div class="user-area">
-
         <span id="userEmail"></span>
-
-        <button id="friendsBtn">
-          👥 Friends
-        </button>
-
-        <button id="logout">
-          Logout
-        </button>
-
+        <button id="friendsBtn">👥 Friends</button>
+        <button id="logout">Logout</button>
       </div>
-
     </div>
-
 
     <div class="rank-card">
-
-      <div id="rankCode" class="rank-code">
-        A
-      </div>
-
+      <div id="rankCode" class="rank-code">A</div>
       <div>
-        <div id="rankName" class="rank-name">
-          😎 Chutiya
-        </div>
-
-        <span id="rankMeta" class="rank-meta">
-          ❤️❤️❤️ 3 lives
-        </span>
+        <div id="rankName" class="rank-name">😎 Chutiya</div>
+        <span id="rankMeta" class="rank-meta">❤️❤️❤️ 3 lives</span>
       </div>
-
     </div>
-
 
     <div class="rules">
-
-      🏆 <b>Monthly rank rule:</b>
-      30-day month = <b>27 days</b> streak,
-      31-day month = <b>28 days</b> streak.
-
-      Rank-up hone par ❤️ <b>3 lives</b> milengi.
-
-      Missed task par 1 life kam hogi.
-
-      0 lives par 1 rank down hoga.
-      A se neeche temporary <b>-A Gandu</b> hoga.
-
+      🏆 30-day month me <b>27 consecutive full days</b> aur 31-day month me <b>28 consecutive full days</b> complete hone par 1 rank up.
+      Rank-up par ❤️ <b>3 lives</b>. Har missed task par 1 life kam. 0 lives par 1 rank down aur lives 3 reset.
+      🎙️ Successful ✓ par tumhari <b>tick-voice.wav</b> play hogi. Automatic recording nahi hogi.
     </div>
-
 
     <div id="friendsPanel" class="panel hidden">
-
       <div class="friends-head">
-
         <div>
           <h2>👥 Friends</h2>
-
-          <div class="sub">
-            Apni aur friends ki monthly progress compare karo.
-          </div>
+          <div class="sub">Friends ke saath monthly progress compare karo.</div>
         </div>
-
-        <button id="closeFriends">
-          ✕ Close
-        </button>
-
+        <button id="closeFriends">✕ Close</button>
       </div>
-
 
       <div class="friend-search">
-
-        <input
-          id="friendSearch"
-          type="email"
-          placeholder="Friend ka email"
-        >
-
-        <button id="sendFriendRequest">
-          ➕ Send Request
-        </button>
-
+        <input id="friendSearch" type="email" placeholder="Friend ka email">
+        <button id="sendFriendRequest">➕ Send Request</button>
       </div>
+      <div id="friendMessage" class="sub"></div>
 
+      <h3>📨 Friend Requests</h3>
+      <div id="friendRequests"><p class="empty">Koi pending request nahi hai.</p></div>
 
-      <div
-        id="friendMessage"
-        class="sub">
-      </div>
-
-
-      <h3>
-        📨 Friend Requests
-      </h3>
-
-      <div id="friendRequests">
-        <p class="empty">
-          Koi pending request nahi hai.
-        </p>
-      </div>
-
-
-      <h3>
-        🏆 My Friends
-      </h3>
-
-      <div id="friendsList">
-        <p class="empty">
-          Abhi koi friend nahi hai.
-        </p>
-      </div>
-
+      <h3>🏆 My Friends</h3>
+      <div id="friendsList"><p class="empty">Abhi koi friend nahi hai.</p></div>
     </div>
-
 
     <div class="controls">
-
-      <button id="prev">
-        ‹
-      </button>
-
-      <input
-        id="month"
-        type="month"
-      >
-
-      <button id="next">
-        ›
-      </button>
-
+      <button id="prev">‹</button>
+      <input id="month" type="month">
+      <button id="next">›</button>
     </div>
-
 
     <div class="stats">
-
-      <div class="stat">
-        <b id="rate">0%</b>
-        <span>Monthly completion</span>
-      </div>
-
-      <div class="stat">
-        <b id="done">0</b>
-        <span>Completed</span>
-      </div>
-
-      <div class="stat">
-        <b id="miss">0</b>
-        <span>Missed</span>
-      </div>
-
-      <div class="stat">
-        <b id="streak">0</b>
-        <span>Monthly streak</span>
-      </div>
-
-      <div class="stat">
-        <b id="xp">0</b>
-        <span>XP</span>
-      </div>
-
-      <div class="stat">
-        <b id="lives">❤️❤️❤️</b>
-        <span>Lives</span>
-      </div>
-
+      <div class="stat"><b id="rate">0%</b><span>Monthly completion</span></div>
+      <div class="stat"><b id="done">0</b><span>Completed</span></div>
+      <div class="stat"><b id="miss">0</b><span>Missed</span></div>
+      <div class="stat"><b id="streak">0</b><span>Monthly streak</span></div>
+      <div class="stat"><b id="xp">0</b><span>XP</span></div>
+      <div class="stat"><b id="lives">❤️❤️❤️</b><span>Lives</span></div>
     </div>
-
 
     <div class="panel">
-
       <div class="bar">
-
-        <strong id="monthTitle">
-          August 2026
-        </strong>
-
+        <strong id="monthTitle">August 2026</strong>
         <form id="add">
-
-          <input
-            id="task"
-            type="text"
-            placeholder="Task / subject"
-            required
-          >
-
-          <input
-            id="time"
-            type="time"
-            required
-          >
-
-          <button type="submit">
-            + Add task
-          </button>
-
+          <input id="task" type="text" placeholder="Task / subject" required>
+          <input id="time" type="time" required>
+          <button type="submit">+ Add task</button>
         </form>
-
       </div>
-
-
       <div class="sub" style="margin-bottom:10px">
-
-        ⏰ Time ke liye native scroll picker use hoga.
-        Yellow cell = 30-minute verification window.
-        Window ke baad task automatic X ho jayega.
-
+        ⏰ Time field phone ka native scroll/time picker use karega. Yellow cell verification window hai.
       </div>
-
-
-      <div
-        id="grid"
-        class="table-wrap">
-      </div>
-
+      <div id="grid" class="table-wrap"></div>
     </div>
-
   </div>
-
 </div>
 
-
 <div id="celebrate"></div>
-
-
-<audio
-  id="tickVoice"
-  preload="auto"
-  src="./tick-voice.wav">
-</audio>
-
+<div id="toast"></div>
+<audio id="tickVoice" src="./tick-voice.wav" preload="auto"></audio>
 
 <script>
 "use strict";
 
+const SUPABASE_URL="https://acsokyrhfequnuvtmomx.supabase.co";
+const SUPABASE_KEY="sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-/* =========================================================
-   SUPABASE
-   ========================================================= */
-
-const SUPABASE_URL =
-  "https://acsokyrhfequnuvtmomx.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
-
-const db =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-
-/* =========================================================
-   STATE
-   ========================================================= */
-
-let user = null;
-
-let profile = null;
-
-let tasks = [];
-
-let marks = {};
-
-let view = new Date();
-
+let user=null;
+let profile=null;
+let tasks=[];
+let marks={};
+let view=new Date();
 view.setDate(1);
 
-let verificationRunning =
-  false;
+let aiObjectModel=null;
+let aiPoseModel=null;
+let verificationRunning=false;
+let verificationTimer=null;
+let verificationStream=null;
+let verificationKey=null;
+let verificationTask=null;
+let tickVoiceUnlocked=false;
+let startupRunning=false;
+const alarmTimers=new Map();
 
-let verificationTimer =
-  null;
+const VERIFY_MINUTES=30;
 
-let verificationStream =
-  null;
-
-let verificationKey =
-  null;
-
-let verificationTask =
-  null;
-
-let aiObjectModel =
-  null;
-
-let aiPoseModel =
-  null;
-
-
-/* =========================================================
-   CONSTANTS
-   ========================================================= */
-
-const VERIFICATION_MINUTES =
-  30;
-
-const rankOrder = [
-  "-A",
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "H"
+const RANKS=[
+  {code:"-A",name:"🤡 Gandu"},
+  {code:"A",name:"😎 Chutiya"},
+  {code:"B",name:"🐃 Matthu"},
+  {code:"C",name:"💪 Mehnatti"},
+  {code:"D",name:"🥷 Jhujharu"},
+  {code:"E",name:"🗿 Dheth"},
+  {code:"F",name:"🧙 Ustaad"},
+  {code:"G",name:"👑 Legend"},
+  {code:"H",name:"🙏 Mahapurush"}
 ];
 
-const rankNames = {
+const $=selector=>document.querySelector(selector);
 
-  "-A":"🤡 Gandu",
+const loginScreen=$("#loginScreen");
+const app=$("#app");
+const emailInput=$("#email");
+const passwordInput=$("#password");
+const authBtn=$("#authBtn");
+const switchAuth=$("#switchAuth");
+const loginText=$("#loginText");
+const userEmail=$("#userEmail");
+const logoutBtn=$("#logout");
+const friendsBtn=$("#friendsBtn");
+const friendsPanel=$("#friendsPanel");
+const closeFriends=$("#closeFriends");
+const friendSearch=$("#friendSearch");
+const sendFriendRequestBtn=$("#sendFriendRequest");
+const friendMessage=$("#friendMessage");
+const monthInput=$("#month");
+const monthTitle=$("#monthTitle");
+const taskInput=$("#task");
+const timeInput=$("#time");
+const grid=$("#grid");
+const tickVoice=$("#tickVoice");
 
-  "A":"😎 Chutiya",
+const pad=n=>String(n).padStart(2,"0");
 
-  "B":"🐃 Matthu",
-
-  "C":"💪 Mehnatti",
-
-  "D":"🔥 Jhujharu",
-
-  "E":"😤 Dheth",
-
-  "F":"🧔🏻‍♂️ Ustaad",
-
-  "G":"👑 Legend",
-
-  "H":"🛕 Mahapurush"
-
-};
-
-
-/* =========================================================
-   DOM
-   ========================================================= */
-
-const $ =
-  selector =>
-    document.querySelector(
-      selector
-    );
-
-
-const loginScreen =
-  $("#loginScreen");
-
-const app =
-  $("#app");
-
-const emailInput =
-  $("#email");
-
-const passwordInput =
-  $("#password");
-
-const authBtn =
-  $("#authBtn");
-
-const switchAuth =
-  $("#switchAuth");
-
-const loginText =
-  $("#loginText");
-
-const userEmail =
-  $("#userEmail");
-
-const logoutBtn =
-  $("#logout");
-
-const friendsBtn =
-  $("#friendsBtn");
-
-const friendsPanel =
-  $("#friendsPanel");
-
-const closeFriends =
-  $("#closeFriends");
-
-const friendSearch =
-  $("#friendSearch");
-
-const sendFriendRequestButton =
-  $("#sendFriendRequest");
-
-const friendMessage =
-  $("#friendMessage");
-
-const monthInput =
-  $("#month");
-
-const monthTitle =
-  $("#monthTitle");
-
-const taskInput =
-  $("#task");
-
-const timeInput =
-  $("#time");
-
-const grid =
-  $("#grid");
-
-const tickVoice =
-  $("#tickVoice");
-
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-const pad =
-  n =>
-    String(n).padStart(
-      2,
-      "0"
-    );
-
-
-function dateKey(date){
-
-  return (
-    date.getFullYear() +
-    "-" +
-    pad(date.getMonth()+1) +
-    "-" +
-    pad(date.getDate())
-  );
-
+function dateKey(d){
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
-
 
 function todayKey(){
+  return dateKey(new Date());
+}
 
-  return dateKey(
-    new Date()
+function esc(v){
+  return String(v??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function toast(text){
+  const el=$("#toast");
+  el.textContent=text;
+  el.style.display="block";
+  clearTimeout(toast.timer);
+  toast.timer=setTimeout(
+    ()=>el.style.display="none",
+    2800
   );
-
 }
 
-
-function esc(value){
-
-  return String(
-    value ?? ""
-  )
-
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-
-    .replace(
-      /</g,
-      "&lt;"
-    )
-
-    .replace(
-      />/g,
-      "&gt;"
-    )
-
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-function showToast(
-  text
-){
-
-  let box =
-    $("#toastBox");
-
-  if(!box){
-
-    box =
-      document.createElement(
-        "div"
-      );
-
-    box.id =
-      "toastBox";
-
-    box.style.position =
-      "fixed";
-
-    box.style.left =
-      "50%";
-
-    box.style.bottom =
-      "22px";
-
-    box.style.transform =
-      "translateX(-50%)";
-
-    box.style.zIndex =
-      "100002";
-
-    box.style.background =
-      "#121c31";
-
-    box.style.border =
-      "1px solid #263552";
-
-    box.style.borderRadius =
-      "12px";
-
-    box.style.padding =
-      "12px 16px";
-
-    box.style.maxWidth =
-      "90vw";
-
-    box.style.textAlign =
-      "center";
-
-    box.style.boxShadow =
-      "0 15px 40px rgba(0,0,0,.35)";
-
-    document.body.appendChild(
-      box
-    );
-
-  }
-
-  box.textContent =
-    text;
-
-  box.style.display =
-    "block";
-
-  clearTimeout(
-    window.__toastTimer
+function rankIndex(rank){
+  const i=RANKS.findIndex(
+    r=>r.code===rank
   );
-
-  window.__toastTimer =
-    setTimeout(
-      () => {
-        box.style.display =
-          "none";
-      },
-      2800
-    );
-
+  return i<0?1:i;
 }
 
-
-/* =========================================================
-   RANK HELPERS
-   ========================================================= */
-
-function rankIndex(
-  rank
-){
-
-  const index =
-    rankOrder.indexOf(
-      rank
-    );
-
-  return index >= 0
-    ? index
-    : 1;
-
+function rankLabel(rank){
+  return RANKS.find(
+    r=>r.code===rank
+  )?.name||RANKS[1].name;
 }
 
-
-function rankCode(
-  index
-){
-
-  return rankOrder[
+function rankCode(index){
+  return RANKS[
     Math.max(
       0,
       Math.min(
-        rankOrder.length - 1,
+        RANKS.length-1,
         index
       )
     )
-  ];
-
+  ].code;
 }
 
-
-function rankLabel(
-  rank
-){
-
-  return (
-    rankNames[rank] ||
-    rankNames.A
-  );
-
+function monthRequired(year,month){
+  return new Date(
+    year,
+    month+1,
+    0
+  ).getDate()-3;
 }
 
-
-/* =========================================================
-   REQUIRED MONTHLY STREAK
-   ========================================================= */
-
-function requiredMonthlyStreak(
-  year,
-  month
-){
-
-  const days =
-    new Date(
-      year,
-      month + 1,
-      0
-    ).getDate();
-
-
-  return (
-    days - 3
-  );
-
-}
-
-
-/* =========================================================
-   TIME PARSING
-   ========================================================= */
-
-function parseTaskTime(
-  value
-){
+function parseTaskTime(value){
 
   if(!value)
     return null;
 
-
-  if(
-    /^\d{2}:\d{2}$/
-      .test(
-        value
-      )
-  ){
+  if(/^\d{2}:\d{2}$/.test(value)){
 
     const [
-      hour,
-      minute
-    ] =
-      value
-        .split(":")
-        .map(Number);
+      h,
+      m
+    ]=value.split(":").map(Number);
 
-
-    return (
-      hour * 60 +
-      minute
-    );
-
+    return h*60+m;
   }
 
-
-  const match =
+  const match=
     String(value)
       .trim()
       .match(
         /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i
       );
 
-
   if(!match)
     return null;
 
+  let h=Number(match[1]);
+  const m=Number(match[2]);
+  const ap=(match[3]||"").toUpperCase();
 
-  let hour =
-    Number(
-      match[1]
-    );
+  if(ap==="PM"&&h<12)
+    h+=12;
 
+  if(ap==="AM"&&h===12)
+    h=0;
 
-  const minute =
-    Number(
-      match[2]
-    );
-
-
-  const suffix =
-    (
-      match[3] ||
-      ""
-    )
-      .toUpperCase();
-
-
-  if(
-    suffix ===
-      "PM" &&
-    hour < 12
-  ){
-
-    hour += 12;
-
-  }
-
-
-  if(
-    suffix ===
-      "AM" &&
-    hour === 12
-  ){
-
-    hour = 0;
-
-  }
-
-
-  return (
-    hour * 60 +
-    minute
-  );
-
+  return h*60+m;
 }
 
+function displayTime(value){
 
-function displayTime(
-  value
-){
+  const mins=
+    parseTaskTime(value);
 
-  const minutes =
-    parseTaskTime(
-      value
-    );
+  if(mins===null)
+    return value||"";
 
+  let h=
+    Math.floor(mins/60);
 
-  if(
-    minutes === null
-  ){
+  const m=
+    mins%60;
 
-    return value ||
-      "";
-
-  }
-
-
-  let hour =
-    Math.floor(
-      minutes / 60
-    );
-
-
-  const minute =
-    minutes %
-    60;
-
-
-  const suffix =
-    hour >= 12
+  const ap=
+    h>=12
       ? "PM"
       : "AM";
 
+  h=
+    h%12||12;
 
-  hour =
-    hour % 12 ||
-    12;
-
-
-  return (
-    hour +
-    ":" +
-    pad(
-      minute
-    ) +
-    " " +
-    suffix
-  );
-
+  return `${h}:${pad(m)} ${ap}`;
 }
 
+function taskType(task){
 
-/* =========================================================
-   TASK TYPE
-   ========================================================= */
-
-function taskType(
-  task
-){
-
-  const text =
-    (
-      task.name ||
-      ""
-    )
-      .toLowerCase()
-      .trim();
-
+  const text=
+    String(
+      task.name||""
+    ).toLowerCase();
 
   if(
     /running|run|jog|jogging|दौड़|दौड़/
-      .test(
-        text
-      )
-  ){
-
+      .test(text)
+  )
     return "running";
-
-  }
-
 
   if(
     /exercise|workout|gym|push.?up|pushup|squat|yoga/
-      .test(
-        text
-      )
-  ){
-
+      .test(text)
+  )
     return "exercise";
-
-  }
-
 
   if(
     /water|paani|pani|drink|drinking|hydration|पानी/
-      .test(
-        text
-      )
-  ){
-
+      .test(text)
+  )
     return "water";
-
-  }
-
 
   if(
     /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/
-      .test(
-        text
-      )
-  ){
-
+      .test(text)
+  )
     return "study";
 
-  }
-
-
   return "general";
-
 }
-
-
-/* =========================================================
-   PROFILE
-   ========================================================= */
 
 async function ensureProfile(){
 
   const {
     data,
     error
-  } =
+  }=
     await db
       .from("profiles")
       .select("*")
@@ -1496,157 +370,115 @@ async function ensureProfile(){
       )
       .maybeSingle();
 
-
   if(error)
     throw error;
 
-
   if(!data){
 
-    const username =
+    const username=
       (
-        user.email ||
+        user.email||
         "User"
       )
         .split("@")[0];
 
-
     const {
       data:created,
       error:insertError
-    } =
+    }=
       await db
         .from("profiles")
         .insert({
-
           id:user.id,
-
-          username:
-
-            username,
-
-          email:
-            user.email,
-
-          rank:
-            "A",
-
-          lives:
-            3
-
+          username,
+          email:user.email,
+          rank:"A",
+          lives:3
         })
         .select()
         .single();
 
-
     if(insertError)
       throw insertError;
 
-
-    profile =
+    profile=
       created;
 
+  }else{
 
-    return;
+    profile=
+      data;
 
-  }
+    const changes={};
 
+    if(
+      !profile.email&&
+      user.email
+    )
+      changes.email=
+        user.email;
 
-  profile =
-    data;
+    if(
+      !profile.rank
+    ){
 
+      changes.rank=
+        "A";
 
-  let changes =
-    {};
+      profile.rank=
+        "A";
 
+    }
 
-  if(
-    !profile.email &&
-    user.email
-  ){
+    if(
+      profile.lives===null||
+      profile.lives===undefined
+    ){
 
-    changes.email =
-      user.email;
+      changes.lives=
+        3;
 
-  }
+      profile.lives=
+        3;
 
+    }
 
-  if(
-    !profile.rank
-  ){
+    if(
+      Object.keys(changes).length
+    ){
 
-    changes.rank =
-      "A";
+      const {
+        data:updated,
+        error:updateError
+      }=
+        await db
+          .from("profiles")
+          .update(changes)
+          .eq(
+            "id",
+            user.id
+          )
+          .select()
+          .single();
 
-    profile.rank =
-      "A";
+      if(updateError)
+        throw updateError;
 
-  }
+      profile=
+        updated;
 
-
-  if(
-    profile.lives === null ||
-    profile.lives === undefined
-  ){
-
-    changes.lives =
-      3;
-
-    profile.lives =
-      3;
-
-  }
-
-
-  if(
-    Object.keys(
-      changes
-    ).length
-  ){
-
-    const {
-      data:updated,
-      error:updateError
-    } =
-      await db
-        .from("profiles")
-        .update(
-          changes
-        )
-        .eq(
-          "id",
-          user.id
-        )
-        .select()
-        .single();
-
-
-    if(updateError)
-      throw updateError;
-
-
-    profile =
-      updated;
+    }
 
   }
 
 }
 
-
-/* =========================================================
-   LOAD DATA
-   ========================================================= */
-
 async function loadData(){
-
-  if(!user)
-    return;
-
 
   const {
     data:taskData,
     error:taskError
-  } =
+  }=
     await db
       .from("tasks")
       .select("*")
@@ -1661,20 +493,16 @@ async function loadData(){
         }
       );
 
-
   if(taskError)
     throw taskError;
 
-
-  tasks =
-    taskData ||
-    [];
-
+  tasks=
+    taskData||[];
 
   const {
     data:markData,
     error:markError
-  } =
+  }=
     await db
       .from("marks")
       .select("*")
@@ -1683,39 +511,25 @@ async function loadData(){
         user.id
       );
 
-
   if(markError)
     throw markError;
 
-
-  marks =
-    {};
-
+  marks={};
 
   (
-    markData ||
-    []
-  )
-    .forEach(
-      mark => {
-
-        marks[
-          `${mark.task_id}|${mark.mark_date}`
-        ] =
-          mark.completed ===
-          true
-            ? 1
-            : 2;
-
-      }
-    );
+    markData||[]
+  ).forEach(
+    m=>{
+      marks[
+        `${m.task_id}|${m.mark_date}`
+      ]=
+        m.completed===true
+          ? 1
+          : 2;
+    }
+  );
 
 }
-
-
-/* =========================================================
-   SAVE MARK
-   ========================================================= */
 
 async function saveMark(
   key,
@@ -1725,18 +539,14 @@ async function saveMark(
   const [
     taskId,
     date
-  ] =
+  ]=
     key.split("|");
 
-
-  if(
-    value ===
-    0
-  ){
+  if(value===0){
 
     const {
       error
-    } =
+    }=
       await db
         .from("marks")
         .delete()
@@ -1753,375 +563,94 @@ async function saveMark(
           date
         );
 
-
     if(error)
       throw error;
-
 
     delete marks[key];
 
     return;
-
   }
-
 
   const {
     error
-  } =
+  }=
     await db
       .from("marks")
-      .upsert({
-
-        user_id:
-          user.id,
-
-        task_id:
-          taskId,
-
-        mark_date:
-          date,
-
-        completed:
-          value === 1
-
-      },{
-        onConflict:
-          "user_id,task_id,mark_date"
-      });
-
+      .upsert(
+        {
+          user_id:user.id,
+          task_id:taskId,
+          mark_date:date,
+          completed:
+            value===1
+        },
+        {
+          onConflict:
+            "user_id,task_id,mark_date"
+        }
+      );
 
   if(error)
     throw error;
 
-
-  marks[key] =
-    value;
-
+  marks[key]=value;
 }
-
-
-/* =========================================================
-   MONTH STATS
-   ========================================================= */
 
 function monthStats(){
 
-  const year =
+  const y=
     view.getFullYear();
 
-
-  const month =
+  const m=
     view.getMonth();
 
-
-  const days =
+  const days=
     new Date(
-      year,
-      month + 1,
+      y,
+      m+1,
       0
     ).getDate();
 
-
-  let completed =
-    0;
-
-
-  let missed =
-    0;
-
-
-  /*
-     A daily streak means every
-     task scheduled by the user
-     was completed on that day.
-  */
-
-  let streak =
-    0;
-
-
-  let current =
-    0;
-
+  let completed=0;
+  let missed=0;
+  let best=0;
+  let current=0;
 
   for(
-    let day=1;
-    day<=days;
-    day++
+    let d=1;
+    d<=days;
+    d++
   ){
 
-    let allDone =
-      tasks.length > 0;
-
+    let allDone=
+      tasks.length>0;
 
     for(
       const task of tasks
     ){
 
-      const key =
-        `${task.id}|${year}-${pad(month+1)}-${pad(day)}`;
+      const key=
+        `${task.id}|${y}-${pad(m+1)}-${pad(d)}`;
 
+      const value=
+        marks[key]||0;
 
-      const value =
-        marks[key] ||
-        0;
-
-
-      if(
-        value ===
-        1
-      ){
-
+      if(value===1)
         completed++;
 
-      }
-
-
-      if(
-        value ===
-        2
-      ){
-
+      if(value===2)
         missed++;
 
-      }
-
-
-      if(
-        value !==
-        1
-      ){
-
-        allDone =
-          false;
-
-      }
+      if(value!==1)
+        allDone=false;
 
     }
 
-
-    if(
-      allDone
-    ){
+    if(allDone){
 
       current++;
 
-      streak =
-        Math.max(
-          streak,
-          current
-        );
-
-    }else{
-
-      current =
-        0;
-
-    }
-
-  }
-
-
-  const total =
-    completed +
-    missed;
-
-
-  return {
-
-    completed,
-
-    missed,
-
-    streak,
-
-    days,
-
-    rate:
-      total === 0
-        ? 0
-        : Math.round(
-            completed /
-            total *
-            100
-          )
-
-  };
-
-}
-
-
-/* =========================================================
-   DAILY OVERALL STREAK
-   ========================================================= */
-
-function overallDailyStreak(){
-
-  if(
-    tasks.length ===
-    0
-  )
-    return 0;
-
-
-  const dates =
-    [];
-
-
-  Object.keys(
-    marks
-  ).forEach(
-    key => {
-
-      if(
-        marks[key] !==
-        1
-      )
-        return;
-
-
-      const [
-        taskId,
-        date
-      ] =
-        key.split("|");
-
-
-      dates.push(
-        `${taskId}|${date}`
-      );
-
-    }
-  );
-
-
-  const dateSet =
-    new Set();
-
-
-  for(
-    const task of tasks
-  ){
-
-    const completedDates =
-      dates
-        .filter(
-          item =>
-            item.startsWith(
-              String(
-                task.id
-              ) + "|"
-            )
-        )
-        .map(
-          item =>
-            item.split("|")[1]
-        );
-
-
-    completedDates.forEach(
-      date =>
-        dateSet.add(date)
-    );
-
-  }
-
-
-  const sorted =
-    [...dateSet]
-      .sort();
-
-
-  let best =
-    0;
-
-
-  let current =
-    0;
-
-
-  for(
-    let i=0;
-    i<sorted.length;
-    i++
-  ){
-
-    const date =
-      sorted[i];
-
-
-    let everyTaskDone =
-      true;
-
-
-    for(
-      const task of tasks
-    ){
-
-      const key =
-        `${task.id}|${date}`;
-
-
-      if(
-        marks[key] !==
-        1
-      ){
-
-        everyTaskDone =
-          false;
-
-        break;
-
-      }
-
-    }
-
-
-    if(
-      everyTaskDone
-    ){
-
-      if(
-        i ===
-        0
-      ){
-
-        current =
-          1;
-
-      }else{
-
-        const previous =
-          new Date(
-            `${sorted[i-1]}T00:00:00`
-          );
-
-
-        const now =
-          new Date(
-            `${date}T00:00:00`
-          );
-
-
-        const diff =
-          Math.round(
-            (
-              now -
-              previous
-            ) /
-            86400000
-          );
-
-
-        current =
-          diff === 1
-            ? current + 1
-            : 1;
-
-      }
-
-
-      best =
+      best=
         Math.max(
           best,
           current
@@ -2129,742 +658,276 @@ function overallDailyStreak(){
 
     }else{
 
-      current =
-        0;
+      current=0;
 
     }
 
   }
 
+  const total=
+    completed+
+    missed;
 
-  return best;
+  return {
+    completed,
+    missed,
+    best,
+    days,
+    rate:
+      total
+        ? Math.round(
+            completed/
+            total*
+            100
+          )
+        : 0
+  };
 
 }
-
-
-/* =========================================================
-   UI STATS
-   ========================================================= */
 
 function updateStats(){
 
-  const stats =
+  const s=
     monthStats();
 
+  $("#rate").textContent=
+    s.rate+"%";
 
-  $("#rate")
-    .textContent =
-      stats.rate +
-      "%";
+  $("#done").textContent=
+    s.completed;
 
+  $("#miss").textContent=
+    s.missed;
 
-  $("#done")
-    .textContent =
-      stats.completed;
+  $("#streak").textContent=
+    s.best;
 
-
-  $("#miss")
-    .textContent =
-      stats.missed;
-
-
-  $("#streak")
-    .textContent =
-      stats.streak;
-
-
-  const xp =
-    stats.completed *
-    10 +
-    overallDailyStreak() *
-    5;
-
-
-  $("#xp")
-    .textContent =
-      xp;
-
+  $("#xp").textContent=
+    s.completed*10+
+    s.best*5;
 
   updateRankUI();
-
 }
-
-
-/* =========================================================
-   RANK UI
-   ========================================================= */
 
 function updateRankUI(){
 
   if(!profile)
     return;
 
+  const rank=
+    profile.rank||"A";
 
-  const rank =
-    profile.rank ||
-    "A";
-
-
-  const lives =
+  const lives=
     Math.max(
       0,
       Number(
-        profile.lives ??
-        3
+        profile.lives??3
       )
     );
 
-
-  const now =
+  const now=
     new Date();
 
-
-  const required =
-    requiredMonthlyStreak(
+  const required=
+    monthRequired(
       now.getFullYear(),
       now.getMonth()
     );
 
+  $("#rankCode").textContent=
+    rank;
 
-  $("#rankCode")
-    .textContent =
-      rank;
+  $("#rankName").textContent=
+    rankLabel(rank);
 
+  $("#rankMeta").textContent=
+    `${"❤️".repeat(lives)||"💔"} ${lives} lives • ${required} days streak for next rank`;
 
-  $("#rankName")
-    .textContent =
-      rankLabel(
-        rank
-      );
-
-
-  $("#rankMeta")
-    .textContent =
-      `${"❤️".repeat(lives)} ${lives} lives • ${required} days monthly streak required`;
-
-
-  $("#lives")
-    .textContent =
-      lives > 0
-        ? "❤️".repeat(lives)
-        : "💔";
+  $("#lives").textContent=
+    lives
+      ? "❤️".repeat(lives)
+      : "💔";
 
 }
 
-
-/* =========================================================
-   RANK-UP STORAGE
-   ========================================================= */
-
-function monthActionKey(
-  prefix,
-  year,
-  month
-){
-
-  return (
-    prefix +
-    "_" +
-    user.id +
-    "_" +
-    year +
-    "-" +
-    pad(month+1)
-  );
-
+function currentMonthStreak(){
+  return monthStats().best;
 }
 
-
-/* =========================================================
-   APPLY MONTHLY RANK
-   ========================================================= */
-
-async function applyMonthlyRankRule(){
+async function applyRankUp(){
 
   if(
-    !profile ||
+    !profile||
     !tasks.length
   )
     return;
 
-
-  const now =
+  const now=
     new Date();
 
-
-  const year =
+  const y=
     now.getFullYear();
 
-
-  const month =
+  const m=
     now.getMonth();
 
-
-  const required =
-    requiredMonthlyStreak(
-      year,
-      month
+  const required=
+    monthRequired(
+      y,
+      m
     );
 
+  const streak=
+    currentMonthStreak();
 
-  const stats =
-    monthStats();
+  const actionKey=
+    `rankup:${user.id}:${y}-${pad(m+1)}`;
 
+  if(
+    streak<
+      required||
+    localStorage.getItem(
+      actionKey
+    )==="1"
+  )
+    return;
 
-  const currentRank =
-    profile.rank ||
+  const rank=
+    profile.rank||
     "A";
 
-
-  const currentIndex =
-    rankIndex(
-      currentRank
-    );
-
-
-  /*
-     Rank-up once per month after
-     reaching the required streak.
-  */
-
-  const upKey =
-    monthActionKey(
-      "rankUp",
-      year,
-      month
-    );
-
+  const idx=
+    rankIndex(rank);
 
   if(
-    stats.streak >=
-      required &&
-    !localStorage.getItem(
-      upKey
-    )
+    idx>=RANKS.length-1
   ){
 
-    if(
-      currentIndex <
-      rankOrder.length - 1
-    ){
-
-      const newRank =
-        rankCode(
-          currentIndex + 1
-        );
-
-
-      try{
-
-        const {
-          data,
-          error
-        } =
-          await db
-            .from("profiles")
-            .update({
-
-              rank:
-                newRank,
-
-              lives:
-                3
-
-            })
-            .eq(
-              "id",
-              user.id
-            )
-            .select()
-            .single();
-
-
-        if(error)
-          throw error;
-
-
-        profile =
-          data;
-
-
-        localStorage.setItem(
-          upKey,
-          "1"
-        );
-
-
-        updateRankUI();
-
-
-        showRankCelebration(
-          newRank
-        );
-
-      }catch(error){
-
-        console.error(
-          "Rank-up error:",
-          error
-        );
-
-      }
-
-    }else{
-
-      localStorage.setItem(
-        upKey,
-        "1"
-      );
-
-    }
-
-  }
-
-
-  /*
-     Monthly failure:
-     evaluate after the calendar month
-     is over. This prevents a mid-month
-     temporary demotion.
-  */
-
-  const previous =
-    new Date(
-      year,
-      month,
-      0
+    localStorage.setItem(
+      actionKey,
+      "1"
     );
 
-
-  const previousYear =
-    previous.getFullYear();
-
-
-  const previousMonth =
-    previous.getMonth();
-
-
-  const previousDatePrefix =
-    `${previousYear}-${pad(previousMonth+1)}-`;
-
-
-  /*
-     Only run previous-month demotion
-     after the first day of a new month.
-  */
-
-  if(
-    now.getDate() ===
-    1
-  ){
-
-    await finalizePreviousMonth(
-      previousYear,
-      previousMonth,
-      previousDatePrefix
-    );
-
+    return;
   }
 
+  const newRank=
+    rankCode(
+      idx+1
+    );
 
-  updateRankUI();
+  const {
+    data,
+    error
+  }=
+    await db
+      .from("profiles")
+      .update({
+        rank:newRank,
+        lives:3
+      })
+      .eq(
+        "id",
+        user.id
+      )
+      .select()
+      .single();
 
-}
+  if(error){
 
+    console.error(
+      "Rank-up",
+      error
+    );
 
-/* =========================================================
-   FINALIZE PREVIOUS MONTH
-   ========================================================= */
-
-async function finalizePreviousMonth(
-  year,
-  month,
-  prefix
-){
-
-  if(
-    !tasks.length
-  )
     return;
 
-
-  const finalKey =
-    monthActionKey(
-      "monthFinalized",
-      year,
-      month
-    );
-
-
-  if(
-    localStorage.getItem(
-      finalKey
-    )
-  )
-    return;
-
-
-  /*
-     Recalculate previous month.
-  */
-
-  let best =
-    0;
-
-
-  let current =
-    0;
-
-
-  const days =
-    new Date(
-      year,
-      month + 1,
-      0
-    ).getDate();
-
-
-  for(
-    let day=1;
-    day<=days;
-    day++
-  ){
-
-    let completeDay =
-      true;
-
-
-    for(
-      const task of tasks
-    ){
-
-      const key =
-        `${task.id}|${prefix}${pad(day)}`;
-
-
-      if(
-        marks[key] !==
-        1
-      ){
-
-        completeDay =
-          false;
-
-        break;
-
-      }
-
-    }
-
-
-    if(
-      completeDay
-    ){
-
-      current++;
-
-      best =
-        Math.max(
-          best,
-          current
-        );
-
-    }else{
-
-      current =
-        0;
-
-    }
-
   }
 
-
-  const required =
-    requiredMonthlyStreak(
-      year,
-      month
-    );
-
-
-  /*
-     Failed month:
-     rank goes down ONE level.
-
-     A -> -A
-     B -> A
-     C -> B
-     ...
-  */
-
-  if(
-    best <
-    required
-  ){
-
-    const currentRank =
-      profile.rank ||
-      "A";
-
-
-    const currentIndex =
-      rankIndex(
-        currentRank
-      );
-
-
-    const newIndex =
-      Math.max(
-        0,
-        currentIndex -
-        1
-      );
-
-
-    /*
-       A -> -A needs special handling
-       because -A is stored at index 0
-       while A is index 1.
-    */
-
-    let newRank =
-      currentRank;
-
-
-    if(
-      currentRank ===
-      "A"
-    ){
-
-      newRank =
-        "-A";
-
-    }else if(
-      currentRank ===
-      "-A"
-    ){
-
-      newRank =
-        "-A";
-
-    }else{
-
-      newRank =
-        rankCode(
-          Math.max(
-            1,
-            currentIndex - 1
-          )
-        );
-
-    }
-
-
-    if(
-      newRank !==
-      currentRank
-    ){
-
-      let lives =
-        Math.max(
-          0,
-          Number(
-            profile.lives ??
-            3
-          ) - 1
-        );
-
-
-      if(
-        lives ===
-        0
-      ){
-
-        lives =
-          3;
-
-      }
-
-
-      try{
-
-        const {
-          data,
-          error
-        } =
-          await db
-            .from("profiles")
-            .update({
-
-              rank:
-                newRank,
-
-              lives:
-                lives
-
-            })
-            .eq(
-              "id",
-              user.id
-            )
-            .select()
-            .single();
-
-
-        if(error)
-          throw error;
-
-
-        profile =
-          data;
-
-
-        showToast(
-          `⬇️ Rank demote hua: ${rankLabel(newRank)}`
-        );
-
-      }catch(error){
-
-        console.error(
-          "Monthly demotion:",
-          error
-        );
-
-      }
-
-    }
-
-  }
-
+  profile=
+    data;
 
   localStorage.setItem(
-    finalKey,
+    actionKey,
     "1"
   );
 
-
   updateRankUI();
+
+  celebrate(
+    newRank
+  );
 
 }
 
-
-/* =========================================================
-   LIFE LOSS
-   ========================================================= */
-
-async function loseLifeForMark(
+async function loseLife(
   key
 ){
 
-  if(!profile)
-    return;
-
-
-  const lossKey =
-    "lifeLoss_" +
-    user.id +
-    "_" +
-    key;
-
+  const onceKey=
+    `lifeloss:${user.id}:${key}`;
 
   if(
     localStorage.getItem(
-      lossKey
-    ) ===
-    "1"
-  ){
-
+      onceKey
+    )==="1"
+  )
     return;
 
-  }
-
-
   localStorage.setItem(
-    lossKey,
+    onceKey,
     "1"
   );
 
-
-  let lives =
+  let lives=
     Math.max(
       0,
       Number(
-        profile.lives ??
+        profile?.lives??
         3
-      ) - 1
+      )-1
     );
 
-
-  let rank =
-    profile.rank ||
+  let rank=
+    profile?.rank||
     "A";
 
-
-  /*
-     Rank doesn't immediately fall on
-     every missed task. The life system
-     only removes a life here.
-
-     When all 3 lives are exhausted,
-     rank drops one level.
-  */
-
   if(
-    lives ===
-    0
+    lives===0
   ){
 
     if(
-      rank ===
-      "A"
-    ){
+      rank==="A"
+    )
+      rank="-A";
 
-      rank =
-        "-A";
-
-    }else if(
-      rank ===
-      "-A"
-    ){
-
-      rank =
-        "-A";
-
-    }else{
-
-      rank =
+    else if(
+      rank!=="-A"
+    )
+      rank=
         rankCode(
-          rankIndex(rank) -
-          1
+          rankIndex(rank)-1
         );
 
-    }
+    lives=3;
 
-
-    lives =
-      3;
-
-
-    showToast(
-      "💔 3 lives khatam — rank down."
+    toast(
+      "💔 Lives khatam — 1 rank down."
     );
 
   }
-
 
   try{
 
     const {
       data,
       error
-    } =
+    }=
       await db
         .from("profiles")
         .update({
-
           rank,
-
           lives
-
         })
         .eq(
           "id",
@@ -2873,21 +936,18 @@ async function loseLifeForMark(
         .select()
         .single();
 
-
     if(error)
       throw error;
 
-
-    profile =
+    profile=
       data;
-
 
     updateRankUI();
 
   }catch(error){
 
     console.error(
-      "Life loss error:",
+      "Life update",
       error
     );
 
@@ -2895,25 +955,18 @@ async function loseLifeForMark(
 
 }
 
-
-/* =========================================================
-   AUTO MISS
-   ========================================================= */
-
 async function autoMiss(
   task,
   date
 ){
 
-  const key =
+  const key=
     `${task.id}|${date}`;
-
 
   if(
     marks[key]
   )
     return;
-
 
   try{
 
@@ -2922,18 +975,14 @@ async function autoMiss(
       2
     );
 
-
-    await loseLifeForMark(
+    await loseLife(
       key
     );
-
-
-    updateStats();
 
   }catch(error){
 
     console.error(
-      "Auto miss:",
+      "Auto miss",
       error
     );
 
@@ -2941,656 +990,481 @@ async function autoMiss(
 
 }
 
+function celebrate(
+  newRank
+){
 
-/* =========================================================
-   VERIFICATION STATUS
-   ========================================================= */
+  const box=
+    $("#celebrate");
+
+  box.innerHTML=
+    "";
+
+  const title=
+    document.createElement(
+      "div"
+    );
+
+  title.className=
+    "rank-message";
+
+  title.innerHTML=
+    `🎉 RANK UP! ${esc(newRank)} ${esc(rankLabel(newRank))}`;
+
+  box.appendChild(
+    title
+  );
+
+  const icons=[
+    "🎉",
+    "🎊",
+    "✨",
+    "⭐",
+    "🥳",
+    "🎈"
+  ];
+
+  for(
+    let i=0;
+    i<45;
+    i++
+  ){
+
+    const p=
+      document.createElement(
+        "div"
+      );
+
+    p.className=
+      "confetti";
+
+    p.textContent=
+      icons[
+        i%icons.length
+      ];
+
+    p.style.left=
+      Math.random()*100+
+      "%";
+
+    p.style.top=
+      -10-
+      Math.random()*20+
+      "%";
+
+    p.style.animationDelay=
+      Math.random()*.7+
+      "s";
+
+    box.appendChild(
+      p
+    );
+
+  }
+
+  setTimeout(
+    ()=>
+      box.innerHTML="",
+    3200
+  );
+
+}
 
 function verificationStatus(
   task,
   date
 ){
 
-  const key =
+  const key=
     `${task.id}|${date}`;
 
-
-  const value =
-    marks[key] ||
-    0;
-
+  const value=
+    marks[key]||0;
 
   if(
-    value ===
-    1
+    value===1
   )
     return "done";
 
-
   if(
-    value ===
-    2
+    value===2
   )
     return "expired";
 
-
-  const minutes =
+  const mins=
     parseTaskTime(
       task.time
     );
 
-
   if(
-    minutes ===
-    null
+    mins===null
   )
     return "window";
 
-
-  const target =
+  const target=
     new Date(
       `${date}T00:00:00`
     );
 
-
   target.setHours(
     Math.floor(
-      minutes /
-      60
+      mins/60
     ),
-    minutes %
-      60,
+    mins%60,
     0,
     0
   );
 
-
-  const now =
+  const now=
     new Date();
 
-
-  const start =
+  const start=
     target.getTime();
 
-
-  const end =
-    start +
-    VERIFICATION_MINUTES *
+  const end=
+    start+
+    VERIFY_MINUTES*
     60000;
 
-
   if(
-    date !==
+    date!==
     todayKey()
-  ){
-
-    return (
-      target.getTime() >
-      now.getTime()
-    )
+  )
+    return target>now
       ? "future"
       : "expired";
 
-  }
-
-
   if(
-    now.getTime() <
+    now.getTime()<
     start
   )
     return "future";
 
-
   if(
-    now.getTime() <=
+    now.getTime()<=
     end
   )
     return "window";
-
 
   return "expired";
 
 }
 
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function render(){
-
-  const year =
-    view.getFullYear();
-
-
-  const month =
-    view.getMonth();
-
-
-  const days =
-    new Date(
-      year,
-      month + 1,
-      0
-    ).getDate();
-
-
-  monthInput.value =
-    `${year}-${pad(month+1)}`;
-
-
-  monthTitle.textContent =
-    view.toLocaleDateString(
-      "en-IN",
-      {
-        month:"long",
-        year:"numeric"
-      }
-    );
-
-
-  let html =
-    `
-
-    <table>
-
-      <thead>
-
-        <tr>
-
-          <th>
-            Task
-          </th>
-
-          <th>
-            Time
-          </th>
-
-    `;
-
-
-  for(
-    let day=1;
-    day<=days;
-    day++
-  ){
-
-    html +=
-      `<th>${day}</th>`;
-
-  }
-
-
-  html +=
-    `
-
-          <th>
-            Delete
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-    `;
-
+function unlockTickVoice(){
 
   if(
-    tasks.length ===
-    0
-  ){
-
-    html +=
-      `
-
-      <tr>
-
-        <td
-          colspan="${days+3}"
-          class="empty">
-
-          Abhi koi task nahi hai.<br>
-
-          Upar se task add karo 👆
-
-        </td>
-
-      </tr>
-
-      `;
-
-  }else{
-
-    tasks.forEach(
-      task => {
-
-        html +=
-          `
-
-          <tr>
-
-            <td class="task-name">
-
-              ${esc(
-                task.name
-              )}
-
-            </td>
-
-            <td class="task-time">
-
-              ${esc(
-                displayTime(
-                  task.time
-                )
-              )}
-
-            </td>
-
-          `;
-
-
-        for(
-          let day=1;
-          day<=days;
-          day++
-        ){
-
-          const date =
-            `${year}-${pad(month+1)}-${pad(day)}`;
-
-
-          const key =
-            `${task.id}|${date}`;
-
-
-          const value =
-            marks[key] ||
-            0;
-
-
-          const status =
-            verificationStatus(
-              task,
-              date
-            );
-
-
-          let text =
-            "—";
-
-
-          let classes =
-            "cell";
-
-
-          if(
-            value ===
-            1
-          ){
-
-            text =
-              "✓";
-
-            classes +=
-              " complete";
-
-          }
-
-
-          if(
-            value ===
-            2
-          ){
-
-            text =
-              "X";
-
-            classes +=
-              " missed";
-
-          }
-
-
-          if(
-            value ===
-            0 &&
-            status ===
-            "window"
-          ){
-
-            classes +=
-              " verify";
-
-          }
-
-
-          if(
-            value ===
-            0 &&
-            status ===
-            "future"
-          ){
-
-            classes +=
-              " locked";
-
-          }
-
-
-          if(
-            date ===
-            todayKey()
-          ){
-
-            classes +=
-              " today";
-
-          }
-
-
-          html +=
-            `
-
-            <td>
-
-              <button
-                class="${classes}"
-                data-mark-key="${esc(key)}">
-
-                ${text}
-
-              </button>
-
-            </td>
-
-            `;
-
-        }
-
-
-        html +=
-          `
-
-            <td>
-
-              <button
-                class="del"
-                data-delete-id="${esc(task.id)}">
-
-                Delete
-
-              </button>
-
-            </td>
-
-          </tr>
-
-          `;
-
-      }
-    );
-
-  }
-
-
-  html +=
-    `
-
-      </tbody>
-
-    </table>
-
-    `;
-
-
-  grid.innerHTML =
-    html;
-
-
-  updateStats();
-
-
-  attachGridEvents();
-
-}
-
-
-/* =========================================================
-   GRID EVENTS
-   ========================================================= */
-
-function attachGridEvents(){
-
-  document
-    .querySelectorAll(
-      "[data-delete-id]"
-    )
-    .forEach(
-      button => {
-
-        button.onclick =
-          async () => {
-
-            if(
-              !confirm(
-                "Task delete karna hai?"
-              )
-            )
-              return;
-
-
-            try{
-
-              const {
-                error
-              } =
-                await db
-                  .from("tasks")
-                  .delete()
-                  .eq(
-                    "id",
-                    button.dataset
-                      .deleteId
-                  )
-                  .eq(
-                    "user_id",
-                    user.id
-                  );
-
-
-              if(error)
-                throw error;
-
-
-              tasks =
-                tasks.filter(
-                  task =>
-                    String(
-                      task.id
-                    ) !==
-                    String(
-                      button.dataset
-                        .deleteId
-                    )
-                );
-
-
-              render();
-
-            }catch(error){
-
-              alert(
-                "Delete error: " +
-                error.message
-              );
-
-            }
-
-          };
-
-      }
-    );
-
-
-  document
-    .querySelectorAll(
-      "[data-mark-key]"
-    )
-    .forEach(
-      button => {
-
-        button.onclick =
-          async () => {
-
-            const key =
-              button.dataset
-                .markKey;
-
-
-            if(
-              marks[key] ===
-              1
-            ){
-
-              playTickVoice();
-
-              return;
-
-            }
-
-
-            const [
-              taskId,
-              date
-            ] =
-              key.split("|");
-
-
-            const task =
-              tasks.find(
-                item =>
-                  String(
-                    item.id
-                  ) ===
-                  String(
-                    taskId
-                  )
-              );
-
-
-            if(!task)
-              return;
-
-
-            const status =
-              verificationStatus(
-                task,
-                date
-              );
-
-
-            if(
-              status ===
-              "window"
-            ){
-
-              startVerification(
-                key,
-                task
-              );
-
-              return;
-
-            }
-
-
-            if(
-              status ===
-              "future"
-            ){
-
-              alert(
-                "⏰ Verification window task ke time par khulegi."
-              );
-
-              return;
-
-            }
-
-
-            if(
-              status ===
-              "expired"
-            ){
-
-              await autoMiss(
-                task,
-                date
-              );
-
-
-              render();
-
-
-              alert(
-                "❌ Verification window khatam ho chuki hai."
-              );
-
-
-              return;
-
-            }
-
-          };
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   PLAY USER VOICE
-   ========================================================= */
-
-function playTickVoice(){
-
-  if(
-    !tickVoice
+    tickVoiceUnlocked
   )
     return;
 
+  try{
 
-  tickVoice.currentTime =
-    0;
+    tickVoice.volume=
+      0;
 
+    const p=
+      tickVoice.play();
 
-  tickVoice.play()
-    .catch(
-      error =>
-        console.log(
-          "Voice playback blocked:",
-          error
-        )
+    if(p){
+
+      p.then(
+        () => {
+
+          tickVoice.pause();
+
+          tickVoice.currentTime=
+            0;
+
+          tickVoice.volume=
+            1;
+
+          tickVoiceUnlocked=
+            true;
+
+        }
+      ).catch(
+        () => {
+
+          tickVoice.volume=
+            1;
+
+        }
+      );
+
+    }
+
+  }catch(error){
+
+    console.log(
+      error
     );
+
+  }
 
 }
 
+function playTickVoice(){
 
-/* =========================================================
-   AI LOAD
-   ========================================================= */
+  try{
+
+    tickVoice.currentTime=
+      0;
+
+    tickVoice.volume=
+      1;
+
+    const p=
+      tickVoice.play();
+
+    if(p){
+
+      p.catch(
+        error =>
+          console.log(
+            "Voice playback",
+            error
+          )
+      );
+
+    }
+
+  }catch(error){
+
+    console.log(
+      "Voice playback",
+      error
+    );
+
+  }
+
+}
+
+async function requestNotificationPermission(){
+
+  if(
+    "Notification" in
+    window &&
+    Notification.permission===
+      "default"
+  ){
+
+    try{
+
+      await Notification
+        .requestPermission();
+
+    }catch(_){}
+
+  }
+
+}
+
+function alarmBeep(){
+
+  try{
+
+    const AC=
+      window.AudioContext||
+      window.webkitAudioContext;
+
+    if(!AC)
+      return;
+
+    const ctx=
+      new AC();
+
+    const osc=
+      ctx.createOscillator();
+
+    const gain=
+      ctx.createGain();
+
+    osc.frequency.value=
+      880;
+
+    gain.gain.value=
+      .12;
+
+    osc.connect(gain);
+
+    gain.connect(
+      ctx.destination
+    );
+
+    osc.start();
+
+    setTimeout(
+      () => {
+
+        osc.stop();
+
+        ctx.close()
+          .catch(
+            () => {}
+          );
+
+      },
+      700
+    );
+
+  }catch(error){
+
+    console.log(
+      "Alarm",
+      error
+    );
+
+  }
+
+}
+
+function sendTaskNotification(
+  task
+){
+
+  alarmBeep();
+
+  if(
+    "Notification" in
+    window &&
+    Notification.permission===
+      "granted"
+  ){
+
+    try{
+
+      new Notification(
+        "⏰ Timetable Reminder",
+        {
+          body:
+            `${task.name} ka verification window open hai.`
+        }
+      );
+
+    }catch(error){
+
+      console.log(
+        error
+      );
+
+    }
+
+  }
+
+}
+
+function checkAlarmWindows(){
+
+  if(
+    !user||
+    !tasks.length
+  )
+    return;
+
+  const today=
+    todayKey();
+
+  for(
+    const task of tasks
+  ){
+
+    const key=
+      `${task.id}|${today}`;
+
+    if(
+      marks[key]
+    ){
+
+      if(
+        alarmTimers.has(key)
+      ){
+
+        clearInterval(
+          alarmTimers.get(
+            key
+          )
+        );
+
+        alarmTimers.delete(
+          key
+        );
+
+      }
+
+      continue;
+    }
+
+    if(
+      verificationStatus(
+        task,
+        today
+      )!==
+      "window"
+    )
+      continue;
+
+    if(
+      !alarmTimers.has(key)
+    ){
+
+      sendTaskNotification(
+        task
+      );
+
+      const timer=
+        setInterval(
+          () => {
+
+            if(
+              marks[key]||
+              verificationStatus(
+                task,
+                today
+              )!==
+                "window"
+            ){
+
+              clearInterval(
+                timer
+              );
+
+              alarmTimers.delete(
+                key
+              );
+
+              return;
+
+            }
+
+            sendTaskNotification(
+              task
+            );
+
+          },
+          300000
+        );
+
+      alarmTimers.set(
+        key,
+        timer
+      );
+
+    }
+
+  }
+
+}
 
 async function loadAI(){
 
   if(
-    typeof cocoSsd ===
-    "undefined" ||
-    typeof poseDetection ===
-    "undefined"
+    typeof tf!=="undefined"
+  )
+    await tf.ready();
+
+  if(
+    typeof cocoSsd==="undefined"||
+    typeof poseDetection==="undefined"
   ){
 
     throw new Error(
@@ -3599,69 +1473,54 @@ async function loadAI(){
 
   }
 
-
   if(
     !aiObjectModel
   ){
 
-    aiObjectModel =
+    aiObjectModel=
       await cocoSsd.load();
 
   }
-
 
   if(
     !aiPoseModel
   ){
 
-    aiPoseModel =
+    aiPoseModel=
       await poseDetection
         .createDetector(
-
           poseDetection
             .SupportedModels
             .MoveNet,
-
           {
-
             modelType:
               poseDetection
                 .movenet
                 .modelType
                 .SINGLEPOSE_LIGHTNING
-
           }
-
         );
 
   }
 
 }
 
-
-/* =========================================================
-   VERIFY MODAL
-   ========================================================= */
-
-function createVerificationModal(
+function createVerifyModal(
   task
 ){
 
-  const old =
+  const old=
     $("#verificationOverlay");
-
 
   if(old)
     old.remove();
 
-
-  const type =
+  const type=
     taskType(
       task
     );
 
-
-  const instructions = {
+  const instructions={
 
     running:
       "🏃 Running movement camera me clearly dikhao.",
@@ -3676,26 +1535,22 @@ function createVerificationModal(
       "📚 Person + study setup camera me dikhao.",
 
     general:
-      "🙂 Person camera ke saamne clearly rakho."
+      "🙂 Person camera ke saamne clearly raho."
 
   };
 
-
-  const overlay =
+  const overlay=
     document.createElement(
       "div"
     );
 
-
-  overlay.id =
+  overlay.id=
     "verificationOverlay";
 
-
-  overlay.className =
+  overlay.className=
     "overlay";
 
-
-  overlay.innerHTML =
+  overlay.innerHTML=
     `
 
     <div class="modal">
@@ -3753,27 +1608,19 @@ function createVerificationModal(
 
     `;
 
-
   document.body.appendChild(
     overlay
   );
 
-
   $("#startVerify")
-    .onclick =
+    .onclick=
       runVerification;
 
-
   $("#cancelVerify")
-    .onclick =
+    .onclick=
       closeVerification;
 
 }
-
-
-/* =========================================================
-   START VERIFICATION
-   ========================================================= */
 
 function startVerification(
   key,
@@ -3785,25 +1632,17 @@ function startVerification(
   )
     return;
 
-
-  verificationKey =
+  verificationKey=
     key;
 
-
-  verificationTask =
+  verificationTask=
     task;
 
-
-  createVerificationModal(
+  createVerifyModal(
     task
   );
 
 }
-
-
-/* =========================================================
-   CLOSE VERIFICATION
-   ========================================================= */
 
 function closeVerification(){
 
@@ -3815,12 +1654,10 @@ function closeVerification(){
       verificationTimer
     );
 
-
-    verificationTimer =
+    verificationTimer=
       null;
 
   }
-
 
   if(
     verificationStream
@@ -3829,42 +1666,31 @@ function closeVerification(){
     verificationStream
       .getTracks()
       .forEach(
-        track =>
-          track.stop()
+        t =>
+          t.stop()
       );
 
-
-    verificationStream =
+    verificationStream=
       null;
 
   }
 
-
-  const overlay =
+  const overlay=
     $("#verificationOverlay");
-
 
   if(overlay)
     overlay.remove();
 
-
-  verificationRunning =
+  verificationRunning=
     false;
 
-
-  verificationKey =
+  verificationKey=
     null;
 
-
-  verificationTask =
+  verificationTask=
     null;
 
 }
-
-
-/* =========================================================
-   AI FRAME VERIFY
-   ========================================================= */
 
 async function verifyFrame(
   task,
@@ -3872,131 +1698,142 @@ async function verifyFrame(
   previousPoints
 ){
 
-  const predictions =
-    await aiObjectModel
-      .detect(
-        video
-      );
+  const predictions=
+    await aiObjectModel.detect(
+      video
+    );
 
-
-  const person =
+  const person=
     predictions.some(
-      item =>
-        item.class ===
-          "person" &&
-        item.score >=
+      p =>
+        p.class===
+          "person"&&
+        p.score>=
           .55
     );
 
-
-  const type =
+  const type=
     taskType(
       task
     );
 
+  if(
+    !person
+  ){
+
+    return {
+      valid:false,
+      points:previousPoints,
+      reason:"🙂 Camera me person dikhao."
+    };
+
+  }
 
   if(
-    type ===
+    type===
+    "water"
+  ){
+
+    const found=
+      predictions.some(
+        p =>
+          (
+            p.class===
+              "bottle"||
+            p.class===
+              "cup"
+          )&&
+          p.score>=.5
+      );
+
+    return {
+      valid:
+        found,
+      points:
+        previousPoints,
+      reason:
+        found
+          ? "💧 Bottle/cup detected."
+          : "💧 Bottle ya cup camera me dikhao."
+    };
+
+  }
+
+  if(
+    type===
     "general"
   ){
 
     return {
-
-      valid:
-        person,
-
-      points:
-        previousPoints,
-
-      reason:
-        person
-          ? "✅ Person detected."
-          : "🙂 Camera me person dikhao."
-
+      valid:true,
+      points:previousPoints,
+      reason:"✅ Person detected."
     };
 
   }
-
 
   if(
-    type ===
-    "water"
+    type===
+    "study"
   ){
 
-    const objectFound =
+    const studyObject=
       predictions.some(
-        item =>
-          (
-            item.class ===
-              "bottle" ||
-            item.class ===
-              "cup"
-          ) &&
-          item.score >=
-            .50
+        p =>
+          p.class===
+            "laptop"&&
+          p.score>=
+            .45
       );
 
-
     return {
-
       valid:
-        person &&
-        objectFound,
-
+        studyObject,
       points:
         previousPoints,
-
       reason:
-        person &&
-        objectFound
-          ? "💧 Bottle/cup detected."
-          : "💧 Bottle ya cup camera me dikhao."
-
+        studyObject
+          ? "📚 Study setup detected."
+          : "📚 Laptop/study setup camera me dikhao."
     };
 
   }
 
-
-  let points =
+  let points=
     null;
-
 
   try{
 
-    const poses =
+    const poses=
       await aiPoseModel
         .estimatePoses(
           video
         );
 
-
-    points =
-      (poses[0]?.keypoints ||
-      [])
+    points=
+      (
+        poses[0]?.keypoints||
+        []
+      )
         .filter(
-          point =>
-            point.score >
+          p =>
+            p.score>
             .35
         )
         .reduce(
           (
-            map,
-            point
+            acc,
+            p
           ) => {
 
-            map[
-              point.name
-            ] = {
-
-              x:
-                point.x,
-
-              y:
-                point.y
-
+            acc[
+              p.name
+            ]={
+              x:p.x,
+              y:p.y
             };
 
-            return map;
+            return acc;
 
           },
           {}
@@ -4005,131 +1842,70 @@ async function verifyFrame(
   }catch(error){
 
     console.log(
-      "Pose:",
+      "Pose",
       error
     );
 
   }
 
-
-  let movement =
+  let movement=
     0;
 
-
   if(
-    previousPoints &&
+    previousPoints&&
     points
   ){
 
-    const names =
-      Object.keys(
-        points
-      );
-
-
-    let total =
+    let total=
       0;
 
-    let count =
+    let count=
       0;
 
-
-    names.forEach(
-      name => {
-
-        if(
-          previousPoints[name]
-        ){
-
-          total +=
-            Math.hypot(
-
-              points[name].x -
-                previousPoints[name].x,
-
-              points[name].y -
-                previousPoints[name].y
-
-            );
-
-
-          count++;
-
-        }
-
-      }
-    );
-
-
-    if(
-      count
+    for(
+      const name of Object.keys(points)
     ){
 
-      movement =
-        total /
-        count;
+      if(
+        previousPoints[name]
+      ){
+
+        total+=
+          Math.hypot(
+            points[name].x-
+              previousPoints[name].x,
+
+            points[name].y-
+              previousPoints[name].y
+          );
+
+        count++;
+
+      }
 
     }
 
-  }
-
-
-  /*
-     Exercise + running:
-     person + visible movement.
-
-     Study:
-     person required.
-     COCO-SSD book detection is not
-     reliable, so no fake book proof.
-  */
-
-  if(
-    type ===
-    "study"
-  ){
-
-    return {
-
-      valid:
-        person,
-
-      points,
-
-      reason:
-        person
-          ? "📚 Person detected."
-          : "📚 Camera me person dikhao."
-
-    };
+    if(count)
+      movement=
+        total/count;
 
   }
-
 
   return {
-
     valid:
-      person &&
-      movement >
-        12,
+      movement>
+      12,
 
     points,
 
     reason:
-      person &&
-      movement >
+      movement>
         12
-        ? "✅ Activity movement detected."
-        : "🏃 Activity/movement clearly dikhao."
-
+        ? "✅ Movement detected."
+        : `🏃 Movement chahiye (${Math.round(movement)}).`
   };
 
 }
-
-
-/* =========================================================
-   RUN VERIFICATION
-   ========================================================= */
 
 async function runVerification(){
 
@@ -4138,171 +1914,114 @@ async function runVerification(){
   )
     return;
 
-
-  verificationRunning =
+  verificationRunning=
     true;
 
-
-  const video =
+  const video=
     $("#verifyVideo");
 
-
-  const status =
+  const status=
     $("#verifyStatus");
 
-
-  const bar =
+  const bar=
     $("#verifyProgress");
 
-
-  const startButton =
+  const start=
     $("#startVerify");
 
-
   if(
-    !video ||
-    !status ||
-    !bar
-  ){
-
-    verificationRunning =
-      false;
-
-    return;
-
-  }
-
+    start
+  )
+    start.disabled=
+      true;
 
   try{
 
-    if(startButton)
-      startButton.disabled =
-        true;
-
-
-    status.textContent =
+    status.textContent=
       "🤖 AI models load ho rahe hain...";
-
 
     await loadAI();
 
-
-    if(
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices
-        .getUserMedia
-    ){
-
-      throw new Error(
-        "Camera support nahi hai."
-      );
-
-    }
-
-
-    status.textContent =
+    status.textContent=
       "📷 Camera permission do...";
 
-
-    verificationStream =
+    verificationStream=
       await navigator
         .mediaDevices
-        .getUserMedia({
-
-          video:{
-
-            facingMode:
-              "user",
-
-            width:{
-              ideal:640
+        .getUserMedia(
+          {
+            video:{
+              facingMode:"user",
+              width:{
+                ideal:640
+              },
+              height:{
+                ideal:480
+              }
             },
+            audio:false
+          }
+        );
 
-            height:{
-              ideal:480
-            }
-
-          },
-
-          audio:false
-
-        });
-
-
-    video.srcObject =
+    video.srcObject=
       verificationStream;
-
 
     await video.play();
 
-
-    status.textContent =
+    status.textContent=
       "🔍 Activity verify ho rahi hai...";
 
-
-    let score =
+    let score=
       0;
 
-
-    let previousPoints =
+    let previousPoints=
       null;
 
-
-    let busy =
+    let busy=
       false;
 
-
-    verificationTimer =
+    verificationTimer=
       setInterval(
         async () => {
 
           if(
-            busy ||
-            !verificationRunning ||
-            !verificationTask ||
+            busy||
+            !verificationRunning||
+            !verificationTask||
             !verificationKey
-          ){
-
+          )
             return;
 
-          }
-
-
-          busy =
+          busy=
             true;
-
 
           try{
 
             const [
               taskId,
               date
-            ] =
+            ]=
               verificationKey
                 .split("|");
 
-
-            const currentStatus =
+            const state=
               verificationStatus(
                 verificationTask,
                 date
               );
 
-
             if(
-              currentStatus !==
+              state!==
               "window"
             ){
 
-              const taskToMiss =
+              const taskToMiss=
                 verificationTask;
-
 
               closeVerification();
 
-
               if(
-                currentStatus ===
+                state===
                 "expired"
               ){
 
@@ -4311,75 +2030,55 @@ async function runVerification(){
                   date
                 );
 
-
                 await loadData();
-
 
                 render();
 
               }
 
-
               return;
 
             }
 
-
-            const result =
+            const result=
               await verifyFrame(
                 verificationTask,
                 video,
                 previousPoints
               );
 
-
-            previousPoints =
+            previousPoints=
               result.points;
 
-
-            if(
+            score=
               result.valid
-            ){
+                ? Math.min(
+                    100,
+                    score+10
+                  )
+                : Math.max(
+                    0,
+                    score-2
+                  );
 
-              score =
-                Math.min(
-                  100,
-                  score + 10
-                );
-
-            }else{
-
-              score =
-                Math.max(
-                  0,
-                  score - 2
-                );
-
-            }
-
-
-            status.textContent =
+            status.textContent=
               result.reason;
 
-
-            bar.style.width =
-              score +
+            bar.style.width=
+              score+
               "%";
 
-
             if(
-              score >=
+              score>=
               100
             ){
 
-              const key =
+              const key=
                 verificationKey;
-
 
               closeVerification();
 
-
-              await completeTask(
+              await completeVerifiedTask(
                 key
               );
 
@@ -4388,13 +2087,13 @@ async function runVerification(){
           }catch(error){
 
             console.error(
-              "Frame error:",
+              "Verification frame",
               error
             );
 
           }finally{
 
-            busy =
+            busy=
               false;
 
           }
@@ -4403,47 +2102,37 @@ async function runVerification(){
         1000
       );
 
-
   }catch(error){
 
     console.error(
-      "Verification:",
+      "Verification",
       error
     );
 
-
-    status.textContent =
+    status.textContent=
       "❌ Camera/AI start nahi hua: " +
       error.message;
 
-
-    verificationRunning =
+    verificationRunning=
       false;
 
-
-    if(startButton)
-      startButton.disabled =
+    if(start)
+      start.disabled=
         false;
 
   }
 
 }
 
-
-/* =========================================================
-   COMPLETE VERIFIED TASK
-   ========================================================= */
-
-async function completeTask(
+async function completeVerifiedTask(
   key
 ){
 
   if(
-    marks[key] ===
+    marks[key]===
     1
   )
     return;
-
 
   try{
 
@@ -4452,60 +2141,21 @@ async function completeTask(
       1
     );
 
-
     playTickVoice();
-
-
-    const [
-      taskId,
-      date
-    ] =
-      key.split("|");
-
-
-    const completionKey =
-      "completionTime_" +
-      user.id +
-      "_" +
-      taskId +
-      "_" +
-      date;
-
-
-    localStorage.setItem(
-      completionKey,
-      new Date()
-        .toLocaleString(
-          "en-IN",
-          {
-            dateStyle:
-              "medium",
-
-            timeStyle:
-              "short"
-
-          }
-        )
-    );
-
 
     render();
 
+    await applyRankUp();
 
-    await applyMonthlyRankRule();
-
-
-    showToast(
-      "✅ Activity verified. Voice played."
+    toast(
+      "✅ Verified! ✓ saved + voice played."
     );
-
 
   }catch(error){
 
     console.error(
       error
     );
-
 
     alert(
       "Completion save nahi hua: " +
@@ -4516,331 +2166,609 @@ async function completeTask(
 
 }
 
-
-/* =========================================================
-   ALARM
-   ========================================================= */
-
-let alarmTimers =
-  {};
-
-
-function requestNotifications(){
+async function checkExpiredTasks(){
 
   if(
-    "Notification" in
-    window
-  ){
-
-    if(
-      Notification.permission ===
-      "default"
-    ){
-
-      Notification
-        .requestPermission()
-        .catch(
-          () => {}
-        );
-
-    }
-
-  }
-
-}
-
-
-function playAlarmBeep(){
-
-  try{
-
-    const AudioContextClass =
-      window.AudioContext ||
-      window.webkitAudioContext;
-
-
-    if(
-      !AudioContextClass
-    )
-      return;
-
-
-    const context =
-      new AudioContextClass();
-
-
-    const oscillator =
-      context.createOscillator();
-
-
-    const gain =
-      context.createGain();
-
-
-    oscillator.type =
-      "sine";
-
-
-    oscillator.frequency.value =
-      880;
-
-
-    gain.gain.value =
-      .12;
-
-
-    oscillator
-      .connect(
-        gain
-      );
-
-
-    gain.connect(
-      context.destination
-    );
-
-
-    oscillator.start();
-
-
-    setTimeout(
-      () => {
-
-        oscillator.stop();
-
-        context.close()
-          .catch(
-            () => {}
-          );
-
-      },
-      500
-    );
-
-  }catch(error){
-
-    console.log(
-      "Alarm:",
-      error
-    );
-
-  }
-
-}
-
-
-function notifyTask(
-  task
-){
-
-  playAlarmBeep();
-
-
-  if(
-    "Notification" in
-    window &&
-    Notification.permission ===
-      "granted"
-  ){
-
-    try{
-
-      new Notification(
-        "⏰ Timetable Reminder",
-        {
-
-          body:
-            `${task.name} ka verification window open hai.`,
-
-          silent:false
-
-        }
-      );
-
-    }catch(error){
-
-      console.log(
-        error
-      );
-
-    }
-
-  }
-
-}
-
-
-function checkAlarmWindows(){
-
-  if(
-    !user ||
+    !user||
     !tasks.length
   )
     return;
 
-
-  const today =
+  const today=
     todayKey();
 
+  let changed=
+    false;
 
-  tasks.forEach(
-    task => {
+  for(
+    const task of tasks
+  ){
 
-      const key =
-        `${task.id}|${today}`;
+    const key=
+      `${task.id}|${today}`;
 
+    if(
+      marks[key]
+    )
+      continue;
 
-      if(
-        marks[key]
-      )
-        return;
+    if(
+      verificationStatus(
+        task,
+        today
+      )===
+      "expired"
+    ){
 
-
-      if(
-        verificationStatus(
-          task,
-          today
-        ) !==
-        "window"
-      )
-        return;
-
-
-      const alarmKey =
-        key;
-
-
-      if(
-        alarmTimers[
-          alarmKey
-        ]
-      )
-        return;
-
-
-      notifyTask(
-        task
+      await autoMiss(
+        task,
+        today
       );
 
+      changed=
+        true;
 
-      /*
-         Repeat a reminder every 5 minutes
-         while window is active.
-      */
+    }
 
-      alarmTimers[
-        alarmKey
-      ] =
-        setInterval(
-          () => {
+  }
+
+  if(changed){
+
+    render();
+
+    await applyRankUp();
+
+  }
+
+}
+
+function render(){
+
+  const y=
+    view.getFullYear();
+
+  const m=
+    view.getMonth();
+
+  const days=
+    new Date(
+      y,
+      m+1,
+      0
+    ).getDate();
+
+  monthInput.value=
+    `${y}-${pad(m+1)}`;
+
+  monthTitle.textContent=
+    view.toLocaleDateString(
+      "en-IN",
+      {
+        month:"long",
+        year:"numeric"
+      }
+    );
+
+  let html=
+    `<table><thead><tr><th>Task</th><th>Time</th>`;
+
+  for(
+    let d=1;
+    d<=days;
+    d++
+  ){
+
+    html+=
+      `<th>${d}</th>`;
+
+  }
+
+  html+=
+    `<th>Delete</th></tr></thead><tbody>`;
+
+  if(
+    !tasks.length
+  ){
+
+    html+=
+      `
+
+      <tr>
+
+        <td
+          colspan="${days+3}"
+          class="empty">
+
+          Abhi koi task nahi hai.<br>
+
+          Upar se task add karo 👆
+
+        </td>
+
+      </tr>
+
+      `;
+
+  }else{
+
+    for(
+      const task of tasks
+    ){
+
+      html+=
+        `
+
+        <tr>
+
+          <td class="task-name">
+
+            ${esc(
+              task.name
+            )}
+
+          </td>
+
+          <td class="task-time">
+
+            ${esc(
+              displayTime(
+                task.time
+              )
+            )}
+
+          </td>
+
+        `;
+
+      for(
+        let d=1;
+        d<=days;
+        d++
+      ){
+
+        const date=
+          `${y}-${pad(m+1)}-${pad(d)}`;
+
+        const key=
+          `${task.id}|${date}`;
+
+        const value=
+          marks[key]||
+          0;
+
+        const state=
+          verificationStatus(
+            task,
+            date
+          );
+
+        let text=
+          "—";
+
+        let classes=
+          "cell";
+
+        if(
+          value===1
+        ){
+
+          text=
+            "✓";
+
+          classes+=
+            " complete";
+
+        }else if(
+          value===2
+        ){
+
+          text=
+            "X";
+
+          classes+=
+            " missed";
+
+        }else if(
+          state===
+          "window"
+        ){
+
+          classes+=
+            " verify";
+
+        }else if(
+          state===
+          "future"
+        ){
+
+          classes+=
+            " locked";
+
+        }
+
+        if(
+          date===
+          todayKey()
+        ){
+
+          classes+=
+            " today";
+
+        }
+
+        html+=
+          `
+
+          <td>
+
+            <button
+              class="${classes}"
+              data-mark="${esc(key)}">
+
+              ${text}
+
+            </button>
+
+          </td>
+
+          `;
+
+      }
+
+      html+=
+        `
+
+          <td>
+
+            <button
+              class="del"
+              data-delete="${esc(task.id)}">
+
+              Delete
+
+            </button>
+
+          </td>
+
+        </tr>
+
+        `;
+
+    }
+
+  }
+
+  html+=
+    `</tbody></table>`;
+
+  grid.innerHTML=
+    html;
+
+  updateStats();
+
+  attachGridEvents();
+
+}
+
+function attachGridEvents(){
+
+  document
+    .querySelectorAll(
+      "[data-delete]"
+    )
+    .forEach(
+      btn => {
+
+        btn.onclick=
+          async () => {
 
             if(
-              marks[key]
-            ){
+              !confirm(
+                "Task delete karna hai?"
+              )
+            )
+              return;
 
-              clearInterval(
-                alarmTimers[
-                  alarmKey
-                ]
+            try{
+
+              const {
+                error
+              }=
+                await db
+                  .from("tasks")
+                  .delete()
+                  .eq(
+                    "id",
+                    btn.dataset.delete
+                  )
+                  .eq(
+                    "user_id",
+                    user.id
+                  );
+
+              if(error)
+                throw error;
+
+              tasks=
+                tasks.filter(
+                  t =>
+                    String(t.id)!==
+                    String(
+                      btn.dataset.delete
+                    )
+                );
+
+              render();
+
+            }catch(error){
+
+              alert(
+                "Delete error: " +
+                error.message
               );
 
+            }
 
-              delete alarmTimers[
-                alarmKey
-              ];
+          };
 
+      }
+    );
+
+  document
+    .querySelectorAll(
+      "[data-mark]"
+    )
+    .forEach(
+      btn => {
+
+        btn.onclick=
+          async () => {
+
+            unlockTickVoice();
+
+            const key=
+              btn.dataset.mark;
+
+            if(
+              marks[key]===
+              1
+            ){
+
+              playTickVoice();
 
               return;
 
             }
 
+            const [
+              taskId,
+              date
+            ]=
+              key.split("|");
 
-            if(
+            const task=
+              tasks.find(
+                t =>
+                  String(t.id)===
+                  String(taskId)
+              );
+
+            if(!task)
+              return;
+
+            const state=
               verificationStatus(
                 task,
-                today
-              ) ===
+                date
+              );
+
+            if(
+              state===
               "window"
             ){
 
-              notifyTask(
+              startVerification(
+                key,
                 task
               );
 
-            }else{
-
-              clearInterval(
-                alarmTimers[
-                  alarmKey
-                ]
-              );
-
-
-              delete alarmTimers[
-                alarmKey
-              ];
+              return;
 
             }
 
-          },
-          300000
-        );
+            if(
+              state===
+              "future"
+            ){
 
-    }
-  );
+              alert(
+                "⏰ Verification window task ke time par khulegi."
+              );
+
+              return;
+
+            }
+
+            if(
+              state===
+              "expired"
+            ){
+
+              await autoMiss(
+                task,
+                date
+              );
+
+              render();
+
+              alert(
+                "❌ Verification window khatam ho chuki hai."
+              );
+
+            }
+
+          };
+
+      }
+    );
 
 }
 
+$("#add").onsubmit=
+  async event => {
 
-/* =========================================================
-   FRIEND REQUEST
-   ========================================================= */
+    event.preventDefault();
+
+    if(!user)
+      return;
+
+    const name=
+      taskInput.value
+        .trim();
+
+    const time=
+      timeInput.value;
+
+    if(
+      !name||
+      !time
+    )
+      return;
+
+    try{
+
+      const {
+        data,
+        error
+      }=
+        await db
+          .from("tasks")
+          .insert({
+            user_id:user.id,
+            name,
+            time
+          })
+          .select()
+          .single();
+
+      if(error)
+        throw error;
+
+      tasks.push(
+        data
+      );
+
+      taskInput.value=
+        "";
+
+      timeInput.value=
+        "";
+
+      render();
+
+    }catch(error){
+
+      alert(
+        "Task add nahi hua: " +
+        error.message
+      );
+
+    }
+
+  };
+
+$("#prev").onclick=
+  () => {
+
+    view.setMonth(
+      view.getMonth()-
+      1
+    );
+
+    render();
+
+  };
+
+$("#next").onclick=
+  () => {
+
+    view.setMonth(
+      view.getMonth()+
+      1
+    );
+
+    render();
+
+  };
+
+monthInput.onchange=
+  () => {
+
+    const [
+      y,
+      m
+    ]=
+      monthInput.value
+        .split("-")
+        .map(Number);
+
+    if(
+      y&&m
+    ){
+
+      view=
+        new Date(
+          y,
+          m-1,
+          1
+        );
+
+      render();
+
+    }
+
+  };
 
 async function sendFriendRequest(){
 
   if(!user)
     return;
 
-
-  const email =
+  const email=
     friendSearch.value
       .trim()
       .toLowerCase();
 
-
   if(!email){
 
-    friendMessage.textContent =
+    friendMessage.textContent=
       "Friend ka email bharo.";
 
     return;
 
   }
 
-
   if(
-    email ===
+    email===
     (
-      user.email ||
+      user.email||
       ""
-    )
-      .toLowerCase()
+    ).toLowerCase()
   ){
 
-    friendMessage.textContent =
+    friendMessage.textContent=
       "Khud ko friend request nahi bhej sakte.";
 
     return;
 
   }
 
-
   try{
 
     const {
       data:friend,
       error:findError
-    } =
+    }=
       await db
         .from("profiles")
         .select(
@@ -4852,24 +2780,21 @@ async function sendFriendRequest(){
         )
         .maybeSingle();
 
-
     if(findError)
       throw findError;
 
-
     if(!friend){
 
-      friendMessage.textContent =
+      friendMessage.textContent=
         "Is email se koi account nahi mila.";
 
       return;
 
     }
 
-
     const {
       data:existing
-    } =
+    }=
       await db
         .from("friend_requests")
         .select(
@@ -4885,117 +2810,97 @@ async function sendFriendRequest(){
         )
         .maybeSingle();
 
-
     if(
-      existing
+      existing&&
+      existing.status!=="rejected"
     ){
 
-      if(
-        existing.status ===
-        "rejected"
-      ){
-
-        const {
-          error
-        } =
-          await db
-            .from("friend_requests")
-            .update({
-              status:"pending"
-            })
-            .eq(
-              "id",
-              existing.id
-            );
-
-
-        if(error)
-          throw error;
-
-
-        friendMessage.textContent =
-          "✅ Friend request dobara bhej di.";
-
-        return;
-
-      }
-
-
-      friendMessage.textContent =
+      friendMessage.textContent=
         "Friend request already bheji ja chuki hai.";
 
       return;
 
     }
 
-
-    const {
-      data:reverse
-    } =
-      await db
-        .from("friend_requests")
-        .select(
-          "id,status"
-        )
-        .eq(
-          "sender_id",
-          friend.id
-        )
-        .eq(
-          "receiver_id",
-          user.id
-        )
-        .maybeSingle();
-
-
     if(
-      reverse?.status ===
-      "pending"
+      existing&&
+      existing.status==="rejected"
     ){
 
-      friendMessage.textContent =
-        "Is friend ki request already pending hai.";
+      const {
+        error
+      }=
+        await db
+          .from("friend_requests")
+          .update({
+            status:
+              "pending"
+          })
+          .eq(
+            "id",
+            existing.id
+          );
 
-      return;
+      if(error)
+        throw error;
+
+    }else{
+
+      const {
+        data:reverse
+      }=
+        await db
+          .from("friend_requests")
+          .select(
+            "id,status"
+          )
+          .eq(
+            "sender_id",
+            friend.id
+          )
+          .eq(
+            "receiver_id",
+            user.id
+          )
+          .maybeSingle();
+
+      if(
+        reverse?.status===
+        "pending"
+      ){
+
+        friendMessage.textContent=
+          "Is friend ki request already pending hai.";
+
+        return;
+
+      }
+
+      const {
+        error
+      }=
+        await db
+          .from("friend_requests")
+          .insert({
+            sender_id:user.id,
+            receiver_id:friend.id,
+            status:"pending"
+          });
+
+      if(error)
+        throw error;
 
     }
 
-
-    const {
-      error:insertError
-    } =
-      await db
-        .from("friend_requests")
-        .insert({
-
-          sender_id:user.id,
-
-          receiver_id:friend.id,
-
-          status:"pending"
-
-        });
-
-
-    if(insertError)
-      throw insertError;
-
-
-    friendMessage.textContent =
+    friendMessage.textContent=
       "✅ Friend request bhej di gayi.";
 
-
-    friendSearch.value =
+    friendSearch.value=
       "";
 
   }catch(error){
 
-    console.error(
-      error
-    );
-
-
-    friendMessage.textContent =
+    friendMessage.textContent=
       "Request error: " +
       error.message;
 
@@ -5003,25 +2908,18 @@ async function sendFriendRequest(){
 
 }
 
-
-/* =========================================================
-   FRIEND REQUESTS
-   ========================================================= */
-
 async function loadFriendRequests(){
 
   if(!user)
     return;
 
-
-  const box =
+  const box=
     $("#friendRequests");
-
 
   const {
     data,
     error
-  } =
+  }=
     await db
       .from("friend_requests")
       .select(
@@ -5036,50 +2934,34 @@ async function loadFriendRequests(){
         "pending"
       );
 
-
   if(error){
 
-    box.innerHTML =
-      `
-      <p class="empty">
-        ${esc(
-          error.message
-        )}
-      </p>
-      `;
+    box.innerHTML=
+      `<p class="empty">${esc(error.message)}</p>`;
 
     return;
 
   }
 
+  if(!data?.length){
 
-  if(
-    !data?.length
-  ){
-
-    box.innerHTML =
-      `
-      <p class="empty">
-        Koi pending request nahi hai.
-      </p>
-      `;
+    box.innerHTML=
+      `<p class="empty">Koi pending request nahi hai.</p>`;
 
     return;
 
   }
 
-
-  box.innerHTML =
+  box.innerHTML=
     "";
 
-
   for(
-    const request of data
+    const req of data
   ){
 
     const {
       data:sender
-    } =
+    }=
       await db
         .from("profiles")
         .select(
@@ -5087,40 +2969,36 @@ async function loadFriendRequests(){
         )
         .eq(
           "id",
-          request.sender_id
+          req.sender_id
         )
         .maybeSingle();
-
 
     if(!sender)
       continue;
 
-
-    const item =
+    const row=
       document.createElement(
         "div"
       );
 
-
-    item.className =
+    row.className=
       "request";
 
-
-    item.innerHTML =
+    row.innerHTML=
       `
 
       <div>
 
         <b>
           ${esc(
-            sender.username ||
+            sender.username||
             sender.email
           )}
         </b>
 
         <small class="small">
           ${esc(
-            sender.email ||
+            sender.email||
             ""
           )}
         </small>
@@ -5133,31 +3011,24 @@ async function loadFriendRequests(){
 
       `;
 
-
-    item
+    row
       .querySelector(
         "button"
       )
-      .onclick =
+      .onclick=
         () =>
           acceptFriendRequest(
-            request.id,
-            request.sender_id
+            req.id,
+            req.sender_id
           );
 
-
     box.appendChild(
-      item
+      row
     );
 
   }
 
 }
-
-
-/* =========================================================
-   ACCEPT FRIEND
-   ========================================================= */
 
 async function acceptFriendRequest(
   requestId,
@@ -5168,7 +3039,7 @@ async function acceptFriendRequest(
 
     const {
       error:requestError
-    } =
+    }=
       await db
         .from("friend_requests")
         .update({
@@ -5180,25 +3051,12 @@ async function acceptFriendRequest(
           requestId
         );
 
-
     if(requestError)
       throw requestError;
 
-
-    /*
-       RLS ke hisaab se current user
-       hi apna friendship row insert kar sakta hai.
-
-       Isliye sirf current user -> sender
-       row insert kar rahe hain.
-
-       loadFriends() dono directions read karta hai,
-       isliye dono users ek-dusre ko friend dekhenge.
-    */
-
     const {
-      data:existing
-    } =
+      data:mine
+    }=
       await db
         .from("friendships")
         .select(
@@ -5214,46 +3072,55 @@ async function acceptFriendRequest(
         )
         .maybeSingle();
 
-
-    if(!existing){
+    if(!mine){
 
       const {
-        error:friendError
-      } =
+        error
+      }=
         await db
           .from("friendships")
           .insert({
-
-            user_id:
-              user.id,
-
-            friend_id:
-              senderId
-
+            user_id:user.id,
+            friend_id:senderId
           });
 
-
-      if(friendError)
-        throw friendError;
+      if(error)
+        throw error;
 
     }
 
+    /*
+       Reverse row is optional.
+       If RLS allows it, insert it too.
+       loadFriends() supports both directions.
+    */
+
+    try{
+
+      await db
+        .from("friendships")
+        .insert({
+          user_id:senderId,
+          friend_id:user.id
+        });
+
+    }catch(error){
+
+      console.log(
+        "Reverse friendship row:",
+        error
+      );
+
+    }
 
     await loadFriendRequests();
-
     await loadFriends();
 
-
-    showToast(
+    toast(
       "✅ Friend added."
     );
 
   }catch(error){
-
-    console.error(
-      error
-    );
-
 
     alert(
       "Friend accept error: " +
@@ -5264,32 +3131,24 @@ async function acceptFriendRequest(
 
 }
 
-
-/* =========================================================
-   FRIEND STATS
-   ========================================================= */
-
 async function getFriendStats(
   friendId
 ){
 
   const {
     data:friendTasks
-  } =
+  }=
     await db
       .from("tasks")
-      .select(
-        "id"
-      )
+      .select("id")
       .eq(
         "user_id",
         friendId
       );
 
-
   const {
     data:friendMarks
-  } =
+  }=
     await db
       .from("marks")
       .select(
@@ -5300,91 +3159,81 @@ async function getFriendStats(
         friendId
       );
 
-
-  const year =
+  const y=
     view.getFullYear();
 
-
-  const month =
+  const m=
     view.getMonth();
 
-
-  const days =
+  const days=
     new Date(
-      year,
-      month + 1,
+      y,
+      m+1,
       0
     ).getDate();
 
-
-  const ids =
+  const ids=
     (
-      friendTasks ||
+      friendTasks||
       []
     )
       .map(
-        task =>
+        t =>
           String(
-            task.id
+            t.id
           )
       );
 
-
-  let completed =
+  let completed=
     0;
 
-
-  let missed =
+  let missed=
     0;
 
-
-  let streak =
+  let best=
     0;
 
-
-  let current =
+  let current=
     0;
-
 
   for(
-    let day=1;
-    day<=days;
-    day++
+    let d=1;
+    d<=days;
+    d++
   ){
 
-    let dayComplete =
-      ids.length > 0;
-
+    let dayComplete=
+      ids.length>
+      0;
 
     for(
-      const taskId of ids
+      const id of ids
     ){
 
-      const mark =
+      const mark=
         (
-          friendMarks ||
+          friendMarks||
           []
         )
           .find(
-            item =>
+            x =>
               String(
-                item.task_id
-              ) ===
-              taskId &&
-              item.mark_date ===
-              `${year}-${pad(month+1)}-${pad(day)}`
+                x.task_id
+              )===
+              id&&
+              x.mark_date===
+              `${y}-${pad(m+1)}-${pad(d)}`
           );
 
-
       if(
-        mark?.completed ===
+        mark?.completed===
         true
       ){
 
         completed++;
 
       }else if(
-        mark?.completed ===
+        mark?.completed===
         false
       ){
 
@@ -5392,13 +3241,12 @@ async function getFriendStats(
 
       }else{
 
-        dayComplete =
+        dayComplete=
           false;
 
       }
 
     }
-
 
     if(
       dayComplete
@@ -5406,67 +3254,55 @@ async function getFriendStats(
 
       current++;
 
-      streak =
+      best=
         Math.max(
-          streak,
+          best,
           current
         );
 
     }else{
 
-      current =
+      current=
         0;
 
     }
 
   }
 
-
-  const total =
-    completed +
+  const total=
+    completed+
     missed;
-
 
   return {
 
     rate:
       total
         ? Math.round(
-            completed /
-            total *
+            completed/
+            total*
             100
           )
         : 0,
 
-    streak
+    streak:
+      best
 
   };
 
 }
-
-
-/* =========================================================
-   LOAD FRIENDS
-   ========================================================= */
 
 async function loadFriends(){
 
   if(!user)
     return;
 
-
-  const box =
+  const box=
     $("#friendsList");
 
-
-  /*
-     Read friendships in both directions.
-  */
-
   const [
-    first,
-    second
-  ] =
+    one,
+    two
+  ]=
     await Promise.all([
 
       db
@@ -5491,93 +3327,61 @@ async function loadFriends(){
 
     ]);
 
-
   if(
-    first.error
+    one.error||
+    two.error
   ){
 
-    box.innerHTML =
-      `
-      <p class="empty">
-        ${esc(
-          first.error.message
-        )}
-      </p>
-      `;
+    const error=
+      one.error||
+      two.error;
+
+    box.innerHTML=
+      `<p class="empty">${esc(error.message)}</p>`;
 
     return;
 
   }
 
-
-  if(
-    second.error
-  ){
-
-    box.innerHTML =
-      `
-      <p class="empty">
-        ${esc(
-          second.error.message
-        )}
-      </p>
-      `;
-
-    return;
-
-  }
-
-
-  const ids =
+  const ids=
     new Set();
 
-
   (
-    first.data ||
+    one.data||
     []
   ).forEach(
-    row =>
+    x =>
       ids.add(
-        row.friend_id
+        x.friend_id
       )
   );
 
-
   (
-    second.data ||
+    two.data||
     []
   ).forEach(
-    row =>
+    x =>
       ids.add(
-        row.user_id
+        x.user_id
       )
   );
-
 
   if(
-    ids.size ===
-    0
+    !ids.size
   ){
 
-    box.innerHTML =
-      `
-      <p class="empty">
-        Abhi koi friend nahi hai.
-      </p>
-      `;
+    box.innerHTML=
+      `<p class="empty">Abhi koi friend nahi hai.</p>`;
 
     return;
 
   }
 
-
-  const myStats =
-    monthStats();
-
-
-  box.innerHTML =
+  box.innerHTML=
     "";
 
+  const mine=
+    monthStats();
 
   for(
     const friendId of ids
@@ -5585,7 +3389,7 @@ async function loadFriends(){
 
     const {
       data:friend
-    } =
+    }=
       await db
         .from("profiles")
         .select(
@@ -5597,51 +3401,30 @@ async function loadFriends(){
         )
         .maybeSingle();
 
-
     if(!friend)
       continue;
 
-
-    const stats =
+    const s=
       await getFriendStats(
         friendId
       );
 
+    const comparison=
+      mine.rate>s.rate
+        ? "🏆 You are ahead"
+        : mine.rate<s.rate
+          ? "🔥 Friend is ahead"
+          : "🤝 Equal";
 
-    let comparison =
-      "🤝 Equal";
-
-
-    if(
-      myStats.rate >
-      stats.rate
-    ){
-
-      comparison =
-        "🏆 You are ahead";
-
-    }else if(
-      myStats.rate <
-      stats.rate
-    ){
-
-      comparison =
-        "🔥 Friend is ahead";
-
-    }
-
-
-    const card =
+    const card=
       document.createElement(
         "div"
       );
 
-
-    card.className =
+    card.className=
       "friend-card";
 
-
-    card.innerHTML =
+    card.innerHTML=
       `
 
       <div class="friend-top">
@@ -5650,14 +3433,14 @@ async function loadFriends(){
 
           <b>
             ${esc(
-              friend.username ||
+              friend.username||
               friend.email
             )}
           </b>
 
           <small class="small">
             ${esc(
-              friend.email ||
+              friend.email||
               ""
             )}
           </small>
@@ -5666,12 +3449,12 @@ async function loadFriends(){
 
         <b>
           ${esc(
-            friend.rank ||
+            friend.rank||
             "A"
           )}
           ${esc(
             rankLabel(
-              friend.rank ||
+              friend.rank||
               "A"
             )
           )}
@@ -5679,62 +3462,45 @@ async function loadFriends(){
 
       </div>
 
-
       <div class="friend-compare">
 
         <div class="mini">
-
           <b>
-            ${myStats.rate}%
+            ${mine.rate}%
           </b>
-
           <span>
             You
           </span>
-
         </div>
 
-
         <div class="mini">
-
           <b>
-            ${stats.rate}%
+            ${s.rate}%
           </b>
-
           <span>
             Friend
           </span>
-
         </div>
 
-
         <div class="mini">
-
           <b>
-            ${myStats.streak}
+            ${mine.best}
           </b>
-
           <span>
             Your streak
           </span>
-
         </div>
 
-
         <div class="mini">
-
           <b>
-            ${stats.streak}
+            ${s.streak}
           </b>
-
           <span>
             Friend streak
           </span>
-
         </div>
 
       </div>
-
 
       <div
         class="sub"
@@ -5744,14 +3510,13 @@ async function loadFriends(){
 
         • Friend ❤️
         ${Number(
-          friend.lives ??
+          friend.lives??
           3
         )}
 
       </div>
 
       `;
-
 
     box.appendChild(
       card
@@ -5761,12 +3526,7 @@ async function loadFriends(){
 
 }
 
-
-/* =========================================================
-   FRIEND EVENTS
-   ========================================================= */
-
-friendsBtn.onclick =
+friendsBtn.onclick=
   async () => {
 
     friendsPanel
@@ -5775,85 +3535,139 @@ friendsBtn.onclick =
         "hidden"
       );
 
-
     await loadFriendRequests();
 
     await loadFriends();
 
   };
 
-
-closeFriends.onclick =
-  () => {
-
+closeFriends.onclick=
+  () =>
     friendsPanel
       .classList
       .add(
         "hidden"
       );
 
-  };
-
-
-sendFriendRequestButton.onclick =
+sendFriendRequestBtn.onclick=
   sendFriendRequest;
 
-
-/* =========================================================
-   AUTH
-   ========================================================= */
-
-let signupMode =
+let signupMode=
   false;
 
-
-switchAuth.onclick =
+switchAuth.onclick=
   () => {
 
-    signupMode =
+    signupMode=
       !signupMode;
 
-
-    loginText.textContent =
+    loginText.textContent=
       signupMode
         ? "Naya account create karo."
         : "Login karke apna tracker open karo.";
 
-
-    authBtn.textContent =
+    authBtn.textContent=
       signupMode
         ? "Signup"
         : "Login";
 
-
-    switchAuth.textContent =
+    switchAuth.textContent=
       signupMode
         ? "Already account hai? Login"
         : "Account nahi hai? Signup";
 
-
-    passwordInput.autocomplete =
+    passwordInput.autocomplete=
       signupMode
         ? "new-password"
         : "current-password";
 
   };
 
+async function startApp(
+  currentUser
+){
 
-authBtn.onclick =
+  if(
+    startupRunning&&
+    user?.id===
+    currentUser?.id
+  )
+    return;
+
+  startupRunning=
+    true;
+
+  user=
+    currentUser;
+
+  userEmail.textContent=
+    user.email||
+    "";
+
+  loginScreen
+    .classList
+    .add(
+      "hidden"
+    );
+
+  app
+    .classList
+    .remove(
+      "hidden"
+    );
+
+  try{
+
+    await requestNotificationPermission();
+
+    await ensureProfile();
+
+    await loadData();
+
+    render();
+
+    await checkExpiredTasks();
+
+    await applyRankUp();
+
+    await loadFriendRequests();
+
+    await loadFriends();
+
+    checkAlarmWindows();
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+    alert(
+      "Data load nahi hua: " +
+      error.message
+    );
+
+  }finally{
+
+    startupRunning=
+      false;
+
+  }
+
+}
+
+authBtn.onclick=
   async () => {
 
-    const email =
+    const email=
       emailInput.value
         .trim();
 
-
-    const password =
+    const password=
       passwordInput.value;
 
-
     if(
-      !email ||
+      !email||
       !password
     ){
 
@@ -5865,15 +3679,12 @@ authBtn.onclick =
 
     }
 
-
-    authBtn.disabled =
+    authBtn.disabled=
       true;
-
 
     try{
 
-      requestNotifications();
-
+      await requestNotificationPermission();
 
       if(
         signupMode
@@ -5882,21 +3693,16 @@ authBtn.onclick =
         const {
           data,
           error
-        } =
+        }=
           await db
             .auth
             .signUp({
-
               email,
-
               password
-
             });
-
 
         if(error)
           throw error;
-
 
         if(
           data.session
@@ -5912,10 +3718,8 @@ authBtn.onclick =
             "Signup successful. Email verify karke login karo."
           );
 
-
-          signupMode =
+          signupMode=
             false;
-
 
           switchAuth.click();
 
@@ -5926,21 +3730,16 @@ authBtn.onclick =
         const {
           data,
           error
-        } =
+        }=
           await db
             .auth
             .signInWithPassword({
-
               email,
-
               password
-
             });
-
 
         if(error)
           throw error;
-
 
         await startApp(
           data.user
@@ -5950,35 +3749,27 @@ authBtn.onclick =
 
     }catch(error){
 
-      console.error(
-        error
-      );
-
-
       alert(
         error.message
       );
 
     }finally{
 
-      authBtn.disabled =
+      authBtn.disabled=
         false;
 
     }
 
   };
 
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-logoutBtn.onclick =
+logoutBtn.onclick=
   async () => {
 
     try{
 
-      await db.auth.signOut();
+      await db
+        .auth
+        .signOut();
 
     }finally{
 
@@ -5988,327 +3779,17 @@ logoutBtn.onclick =
 
   };
 
-
-/* =========================================================
-   ADD TASK
-   ========================================================= */
-
-$("#add").onsubmit =
-  async event => {
-
-    event.preventDefault();
-
-
-    if(!user)
-      return;
-
-
-    const name =
-      taskInput.value
-        .trim();
-
-
-    const time =
-      timeInput.value;
-
-
-    if(
-      !name ||
-      !time
-    ){
-
-      alert(
-        "Task aur time select karo."
-      );
-
-      return;
-
-    }
-
-
-    try{
-
-      const {
-        data,
-        error
-      } =
-        await db
-          .from("tasks")
-          .insert({
-
-            user_id:
-              user.id,
-
-            name:
-              name,
-
-            time:
-              time
-
-          })
-          .select()
-          .single();
-
-
-      if(error)
-        throw error;
-
-
-      tasks.push(
-        data
-      );
-
-
-      taskInput.value =
-        "";
-
-
-      timeInput.value =
-        "";
-
-
-      render();
-
-    }catch(error){
-
-      alert(
-        "Task add nahi hua: " +
-        error.message
-      );
-
-    }
-
-  };
-
-
-/* =========================================================
-   MONTH NAVIGATION
-   ========================================================= */
-
-$("#prev").onclick =
-  () => {
-
-    view.setMonth(
-      view.getMonth() -
-      1
-    );
-
-
-    render();
-
-  };
-
-
-$("#next").onclick =
-  () => {
-
-    view.setMonth(
-      view.getMonth() +
-      1
-    );
-
-
-    render();
-
-  };
-
-
-monthInput.onchange =
-  () => {
-
-    const [
-      year,
-      month
-    ] =
-      monthInput.value
-        .split("-")
-        .map(
-          Number
-        );
-
-
-    if(
-      Number.isNaN(
-        year
-      ) ||
-      Number.isNaN(
-        month
-      )
-    )
-      return;
-
-
-    view =
-      new Date(
-        year,
-        month - 1,
-        1
-      );
-
-
-    render();
-
-  };
-
-
-/* =========================================================
-   START APP
-   ========================================================= */
-
-async function startApp(
-  currentUser
-){
-
-  user =
-    currentUser;
-
-
-  userEmail.textContent =
-    user.email ||
-    "";
-
-
-  loginScreen
-    .classList
-    .add(
-      "hidden"
-    );
-
-
-  app
-    .classList
-    .remove(
-      "hidden"
-    );
-
-
-  try{
-
-    await ensureProfile();
-
-    await loadData();
-
-    render();
-
-    await checkExpiredTasks();
-
-    render();
-
-    await applyMonthlyRankRule();
-
-    await loadFriendRequests();
-
-    await loadFriends();
-
-    requestNotifications();
-
-    checkAlarmWindows();
-
-  }catch(error){
-
-    console.error(
-      error
-    );
-
-
-    alert(
-      "Data load nahi hua: " +
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   EXPIRED TASKS
-   ========================================================= */
-
-async function checkExpiredTasks(){
-
-  if(
-    !user ||
-    !tasks.length
-  )
-    return;
-
-
-  const today =
-    todayKey();
-
-
-  let changed =
-    false;
-
-
-  for(
-    const task of tasks
-  ){
-
-    const key =
-      `${task.id}|${today}`;
-
-
-    if(
-      marks[key]
-    )
-      continue;
-
-
-    const status =
-      verificationStatus(
-        task,
-        today
-      );
-
-
-    if(
-      status ===
-      "expired"
-    ){
-
-      await autoMiss(
-        task,
-        today
-      );
-
-
-      changed =
-        true;
-
-    }
-
-  }
-
-
-  if(changed){
-
-    render();
-
-    await applyMonthlyRankRule();
-
-  }
-
-}
-
-
-/* =========================================================
-   BACKGROUND
-   ========================================================= */
-
 setInterval(
   async () => {
 
     if(!user)
       return;
 
-
     try{
 
       await checkExpiredTasks();
 
-      await applyMonthlyRankRule();
+      await applyRankUp();
 
       checkAlarmWindows();
 
@@ -6317,7 +3798,7 @@ setInterval(
     }catch(error){
 
       console.error(
-        "Background:",
+        "Background",
         error
       );
 
@@ -6327,17 +3808,12 @@ setInterval(
   10000
 );
 
-
-/* =========================================================
-   PAGE RETURN
-   ========================================================= */
-
 document.addEventListener(
   "visibilitychange",
   async () => {
 
     if(
-      !document.hidden &&
+      !document.hidden&&
       user
     ){
 
@@ -6349,7 +3825,7 @@ document.addEventListener(
 
         await checkExpiredTasks();
 
-        await applyMonthlyRankRule();
+        await applyRankUp();
 
         await loadFriendRequests();
 
@@ -6358,7 +3834,7 @@ document.addEventListener(
       }catch(error){
 
         console.error(
-          "Visibility:",
+          "Resume",
           error
         );
 
@@ -6369,12 +3845,7 @@ document.addEventListener(
   }
 );
 
-
-/* =========================================================
-   SESSION
-   ========================================================= */
-
-(async function(){
+(async()=>{
 
   try{
 
@@ -6382,9 +3853,10 @@ document.addEventListener(
       data:{
         session
       }
-    } =
-      await db.auth.getSession();
-
+    }=
+      await db
+        .auth
+        .getSession();
 
     if(session){
 
@@ -6404,11 +3876,6 @@ document.addEventListener(
 
 })();
 
-
-/* =========================================================
-   AUTH LISTENER
-   ========================================================= */
-
 db.auth.onAuthStateChange(
   async (
     event,
@@ -6416,7 +3883,7 @@ db.auth.onAuthStateChange(
   ) => {
 
     if(
-      session &&
+      session&&
       !user
     ){
 
@@ -6430,6 +3897,5 @@ db.auth.onAuthStateChange(
 );
 
 </script>
-
 </body>
 </html>
