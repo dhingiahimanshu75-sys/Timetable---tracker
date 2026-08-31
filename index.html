@@ -1,4 +1,4 @@
-<!doctype html>
+               <!doctype html>
 <html lang="hi">
 <head>
 <meta charset="utf-8">
@@ -12,233 +12,1155 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 
 <style>
-:root{--bg:#070b15;--card:#111a2d;--card2:#18233b;--text:#f4f7ff;--muted:#8d9ab5;--line:#263552;--accent:#6366f1;--good:#22c55e;--bad:#ef4444;--warn:#facc15}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text)}
-body{background:radial-gradient(circle at 15% 0,#202b61 0,transparent 35%),radial-gradient(circle at 90% 100%,#172554 0,transparent 35%),var(--bg)}
-button,input{font:inherit}button{cursor:pointer;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 14px}button:hover{background:var(--card2);border-color:#818cf8}button:disabled{opacity:.5;cursor:not-allowed}input{width:100%;color:var(--text);background:#0d1527;border:1px solid var(--line);border-radius:11px;padding:12px 14px;outline:0}input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #6366f125}input::placeholder{color:#64748b}.hidden{display:none!important}
-.wrap{width:min(1200px,94%);margin:auto;padding:26px 0 50px}.top,.bar,.friends-head,.friend-top{display:flex;justify-content:space-between;align-items:center;gap:14px}.top{margin-bottom:18px}h1{margin:0;font-size:30px}h2{margin:0 0 6px}h3{margin:18px 0 10px}.sub{color:var(--muted);font-size:13px;margin-top:5px}
-.user-area{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}.panel{padding:18px;border:1px solid var(--line);border-radius:18px;background:rgba(17,26,45,.92);box-shadow:0 18px 45px #0004;margin-bottom:17px}
-.rank-card{display:flex;align-items:center;gap:13px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--card),#0d1527);margin-bottom:14px}.rank-code{font-size:32px;font-weight:900;min-width:52px;text-align:center}.rank-name{font-size:18px;font-weight:800}.rank-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-.rules{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0d1527;color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:16px}.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:17px}.stat{padding:16px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,var(--card),#0d1527)}.stat b{display:block;font-size:23px}.stat span{font-size:12px;color:var(--muted)}
-.controls{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:17px}.controls input{max-width:280px}.bar{margin-bottom:14px}.bar strong{font-size:18px}#add{display:flex;align-items:center;gap:8px}#task{width:185px}#time{width:150px}#add button{background:linear-gradient(135deg,var(--accent),#4f46e5);border:0;font-weight:700}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;min-width:1050px;border-collapse:separate;border-spacing:0}th{padding:11px 7px;background:#0e1729;color:#aeb9d0;font-size:12px;white-space:nowrap;border-bottom:1px solid var(--line)}td{height:48px;text-align:center;background:#10192c;border-right:1px solid #1d2942;border-bottom:1px solid #1d2942}td:last-child,th:last-child{border-right:0}.task-name{text-align:left;min-width:155px;padding-left:13px;font-weight:700}.task-time{min-width:110px;color:var(--muted);font-size:12px}.cell{width:42px;height:40px;padding:0;border:1px solid transparent;border-radius:9px;background:transparent;color:#64748b;font-weight:800}.cell.complete{color:#4ade80;background:#22c55e14;border-color:#22c55e40}.cell.missed{color:#f87171;background:#ef444414;border-color:#ef444440}.cell.verify{color:var(--warn);background:#facc1514;border-color:#facc1555;animation:pulse 1.2s infinite}.cell.locked{opacity:.35}.cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
-@keyframes pulse{50%{box-shadow:0 0 0 5px #facc1514}}
-.del{border:0;background:transparent;color:#f87171;font-size:12px}.empty{color:var(--muted);padding:30px;text-align:center}
-.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login-card{width:min(420px,100%);padding:28px;border:1px solid var(--line);border-radius:22px;background:#111a2df5;box-shadow:0 25px 70px #0007}.login-card h1{font-size:26px;margin-bottom:7px}.login-card p{color:var(--muted);font-size:14px;margin:0 0 20px}.login-card input{margin-bottom:10px}.login-card button{width:100%;background:linear-gradient(135deg,var(--accent),#4f46e5);border:0;font-weight:700}.switch{text-align:center;color:var(--muted);font-size:13px;margin-top:14px;cursor:pointer}
-.friends-head{display:flex}.friend-search{display:flex;gap:8px;margin:14px 0}.friend-card{padding:13px;margin:8px 0;border:1px solid var(--line);border-radius:13px;background:#0d1527}.friend-compare{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.mini{padding:8px;border:1px solid var(--line);border-radius:9px;text-align:center}.mini b{display:block}.mini span{color:var(--muted);font-size:10px}.request{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:9px;margin:6px 0}.small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
-.overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:#000d}.modal{width:min(680px,96vw);max-height:92vh;overflow:auto;padding:18px;border:1px solid #34415d;border-radius:20px;background:#101827;text-align:center;box-shadow:0 25px 80px #000a}.modal video{width:100%;max-height:390px;object-fit:cover;border-radius:14px;background:#050914;border:1px solid #394660}.progress{height:13px;background:#273248;border-radius:20px;overflow:hidden;margin:13px 0}.progress>div{height:100%;width:0;background:#39d98a;transition:.2s}.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.notice{padding:10px;border:1px solid #facc1540;border-radius:12px;background:#facc150c}
-#celebrate{position:fixed;inset:0;z-index:100000;pointer-events:none;overflow:hidden}.confetti{position:absolute;font-size:24px;animation:fall 2s ease-out forwards}.rank-message{position:absolute;top:20%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:900;white-space:nowrap;text-shadow:0 5px 20px #0008}@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:100001;display:none;max-width:90vw;padding:11px 15px;border:1px solid var(--line);border-radius:12px;background:#121c31;box-shadow:0 15px 40px #0006;text-align:center}
-@media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:720px){.top,.bar,.friends-head{flex-direction:column;align-items:stretch}.stats{grid-template-columns:repeat(2,1fr)}#add{flex-wrap:wrap}#add input{flex:1;width:auto!important;min-width:120px}.friend-compare{grid-template-columns:repeat(2,1fr)}.user-area{flex-wrap:wrap}h1{font-size:24px}}
+:root{
+  --bg:#070b15;
+  --card:#111a2d;
+  --card2:#18233b;
+  --text:#f4f7ff;
+  --muted:#8d9ab5;
+  --line:#263552;
+  --accent:#6366f1;
+  --good:#22c55e;
+  --bad:#ef4444;
+  --warn:#facc15;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  color:var(--text);
+}
+
+body{
+  background:
+    radial-gradient(circle at 15% 0,#202b61 0,transparent 35%),
+    radial-gradient(circle at 90% 100%,#172554 0,transparent 35%),
+    var(--bg);
+}
+
+button,input{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  color:var(--text);
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:10px 14px;
+}
+
+button:hover{
+  background:var(--card2);
+  border-color:#818cf8;
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+input{
+  width:100%;
+  color:var(--text);
+  background:#0d1527;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:12px 14px;
+  outline:0;
+}
+
+input:focus{
+  border-color:#818cf8;
+  box-shadow:0 0 0 3px #6366f125;
+}
+
+input::placeholder{
+  color:#64748b;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.wrap{
+  width:min(1200px,94%);
+  margin:auto;
+  padding:26px 0 50px;
+}
+
+.top,
+.bar,
+.friends-head,
+.friend-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+}
+
+.top{
+  margin-bottom:18px;
+}
+
+h1{
+  margin:0;
+  font-size:30px;
+}
+
+h2{
+  margin:0 0 6px;
+}
+
+h3{
+  margin:18px 0 10px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:5px;
+}
+
+.user-area{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.panel{
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(17,26,45,.92);
+  box-shadow:0 18px 45px #0004;
+  margin-bottom:17px;
+}
+
+.rank-card{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:linear-gradient(145deg,var(--card),#0d1527);
+  margin-bottom:14px;
+}
+
+.rank-icon{
+  font-size:34px;
+  min-width:48px;
+  text-align:center;
+}
+
+.rank-name{
+  font-size:18px;
+  font-weight:800;
+}
+
+.rank-meta{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:2px;
+}
+
+.rules{
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#0d1527;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.6;
+  margin-bottom:16px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:11px;
+  margin-bottom:17px;
+}
+
+.stat{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:linear-gradient(145deg,var(--card),#0d1527);
+}
+
+.stat b{
+  display:block;
+  font-size:23px;
+}
+
+.stat span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  margin-bottom:17px;
+}
+
+.controls input{
+  max-width:280px;
+}
+
+.bar{
+  margin-bottom:14px;
+}
+
+.bar strong{
+  font-size:18px;
+}
+
+#add{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+#task{
+  width:185px;
+}
+
+#time{
+  width:150px;
+}
+
+#add button{
+  background:linear-gradient(135deg,var(--accent),#4f46e5);
+  border:0;
+  font-weight:700;
+}
+
+.table-wrap{
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+
+table{
+  width:100%;
+  min-width:1050px;
+  border-collapse:separate;
+  border-spacing:0;
+}
+
+th{
+  padding:11px 7px;
+  background:#0e1729;
+  color:#aeb9d0;
+  font-size:12px;
+  white-space:nowrap;
+  border-bottom:1px solid var(--line);
+}
+
+td{
+  height:48px;
+  text-align:center;
+  background:#10192c;
+  border-right:1px solid #1d2942;
+  border-bottom:1px solid #1d2942;
+}
+
+td:last-child,
+th:last-child{
+  border-right:0;
+}
+
+.task-name{
+  text-align:left;
+  min-width:155px;
+  padding-left:13px;
+  font-weight:700;
+}
+
+.task-time{
+  min-width:110px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.cell{
+  width:42px;
+  height:40px;
+  padding:0;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:#64748b;
+  font-weight:800;
+}
+
+.cell.complete{
+  color:#4ade80;
+  background:#22c55e14;
+  border-color:#22c55e40;
+}
+
+.cell.missed{
+  color:#f87171;
+  background:#ef444414;
+  border-color:#ef444440;
+}
+
+.cell.verify{
+  color:var(--warn);
+  background:#facc1514;
+  border-color:#facc1555;
+  animation:pulse 1.2s infinite;
+}
+
+.cell.locked{
+  opacity:.35;
+}
+
+.cell.today{
+  box-shadow:inset 0 0 0 2px var(--accent);
+}
+
+@keyframes pulse{
+  50%{
+    box-shadow:0 0 0 5px #facc1514;
+  }
+}
+
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.login-card{
+  width:min(420px,100%);
+  padding:28px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:#111a2df5;
+  box-shadow:0 25px 70px #0007;
+}
+
+.login-card h1{
+  font-size:26px;
+  margin-bottom:7px;
+}
+
+.login-card p{
+  color:var(--muted);
+  font-size:14px;
+  margin:0 0 20px;
+}
+
+.login-card input{
+  margin-bottom:10px;
+}
+
+.login-card button{
+  width:100%;
+  background:linear-gradient(135deg,var(--accent),#4f46e5);
+  border:0;
+  font-weight:700;
+}
+
+.switch{
+  text-align:center;
+  color:#9aa7c4;
+  font-size:13px;
+  margin-top:14px;
+  cursor:pointer;
+}
+
+.error-box{
+  margin:0 0 12px;
+  padding:10px 12px;
+  border-radius:11px;
+  border:1px solid #ef444450;
+  background:#ef444410;
+  color:#fca5a5;
+  font-size:12px;
+}
+
+.friend-search{
+  display:flex;
+  gap:8px;
+  margin:14px 0;
+}
+
+.friend-card{
+  padding:13px;
+  margin:8px 0;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#0d1527;
+}
+
+.friend-compare{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-top:10px;
+}
+
+.mini{
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  text-align:center;
+}
+
+.mini b{
+  display:block;
+}
+
+.mini span{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.request{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:9px;
+  margin:6px 0;
+}
+
+.small{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:3px;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:#000d;
+}
+
+.modal{
+  width:min(680px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  padding:18px;
+  border:1px solid #34415d;
+  border-radius:20px;
+  background:#101827;
+  text-align:center;
+  box-shadow:0 25px 80px #000a;
+}
+
+.modal video{
+  width:100%;
+  max-height:390px;
+  object-fit:cover;
+  border-radius:14px;
+  background:#050914;
+  border:1px solid #394660;
+}
+
+.progress{
+  height:13px;
+  background:#273248;
+  border-radius:20px;
+  overflow:hidden;
+  margin:13px 0;
+}
+
+.progress>div{
+  height:100%;
+  width:0;
+  background:#39d98a;
+  transition:.2s;
+}
+
+.actions{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.notice{
+  padding:10px;
+  border:1px solid #facc1540;
+  border-radius:12px;
+  background:#facc150c;
+}
+
+.verify-state{
+  padding:8px 10px;
+  margin:8px 0;
+  border-radius:10px;
+  background:#0b1323;
+  border:1px solid var(--line);
+  font-size:12px;
+}
+
+#celebrate{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.confetti{
+  position:absolute;
+  font-size:24px;
+  animation:fall 2s ease-out forwards;
+}
+
+.rank-message{
+  position:absolute;
+  top:20%;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:28px;
+  font-weight:900;
+  white-space:nowrap;
+  text-shadow:0 5px 20px #0008;
+}
+
+@keyframes fall{
+  to{
+    transform:translateY(110vh) rotate(720deg);
+    opacity:0;
+  }
+}
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  z-index:100001;
+  display:none;
+  max-width:90vw;
+  padding:11px 15px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#121c31;
+  box-shadow:0 15px 40px #0006;
+  text-align:center;
+}
+
+@media(max-width:1050px){
+  .stats{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(max-width:720px){
+  .top,
+  .bar,
+  .friends-head{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  #add{
+    flex-wrap:wrap;
+  }
+
+  #add input{
+    flex:1;
+    width:auto!important;
+    min-width:120px;
+  }
+
+  .friend-compare{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .user-area{
+    flex-wrap:wrap;
+  }
+
+  h1{
+    font-size:24px;
+  }
+}
 </style>
 </head>
+
 <body>
 
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
+
     <h1>📅 My Timetable Tracker</h1>
-    <p id="loginText">Login karke apna tracker open karo.</p>
-    <input id="email" type="email" autocomplete="email" placeholder="Email">
-    <input id="password" type="password" autocomplete="current-password" placeholder="Password">
-    <button id="authBtn">Login</button>
-    <div id="switchAuth" class="switch">Account nahi hai? Signup</div>
+
+    <p id="loginText">
+      Login karke apna tracker open karo.
+    </p>
+
+    <div id="loginError" class="error-box hidden"></div>
+
+    <input
+      id="email"
+      type="email"
+      autocomplete="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Password"
+    >
+
+    <button id="authBtn">
+      Login
+    </button>
+
+    <div id="switchAuth" class="switch">
+      Account nahi hai? Signup
+    </div>
+
   </div>
 </div>
+
 
 <div id="app" class="hidden">
+
   <div class="wrap">
+
     <div class="top">
+
       <div>
         <h1>📅 My Timetable Tracker</h1>
-        <div class="sub">✓ = complete &nbsp; X = missed &nbsp; — = not marked</div>
+
+        <div class="sub">
+          ✓ = complete &nbsp;
+          X = missed &nbsp;
+          — = not marked
+        </div>
       </div>
+
       <div class="user-area">
+
         <span id="userEmail"></span>
-        <button id="friendsBtn">👥 Friends</button>
-        <button id="logout">Logout</button>
+
+        <button id="friendsBtn">
+          👥 Friends
+        </button>
+
+        <button id="logout">
+          Logout
+        </button>
+
       </div>
+
     </div>
+
 
     <div class="rank-card">
-      <div id="rankCode" class="rank-code">A</div>
-      <div>
-        <div id="rankName" class="rank-name">😎 Chutiya</div>
-        <span id="rankMeta" class="rank-meta">❤️❤️❤️ 3 lives</span>
+
+      <div id="rankIcon" class="rank-icon">
+        🤡
       </div>
+
+      <div>
+
+        <div id="rankName" class="rank-name">
+          Gandu
+        </div>
+
+        <span id="rankMeta" class="rank-meta">
+          ❤️❤️❤️ 3 lives
+        </span>
+
+      </div>
+
     </div>
+
 
     <div class="rules">
-      🏆 30-day month me <b>27 consecutive full days</b> aur 31-day month me <b>28 consecutive full days</b> complete hone par 1 rank up.
-      Rank-up par ❤️ <b>3 lives</b>. Har missed task par 1 life kam. 0 lives par 1 rank down aur lives 3 reset.
-      🎙️ Successful ✓ par tumhari <b>tick-voice.wav</b> play hogi. Automatic recording nahi hogi.
+
+      🏆 30-day month me <b>27 full days</b>
+      aur 31-day month me <b>28 full days</b>
+      complete hone par 1 rank up.
+
+      Rank-up par ❤️ 3 lives.
+
+      Har missed task par 1 life kam.
+
+      0 lives par 1 rank down aur lives 3 reset.
+
+      🎙️ Successful ✓ par tumhari exact
+      <b>tick-voice.wav</b> play hogi.
+
     </div>
+
 
     <div id="friendsPanel" class="panel hidden">
+
       <div class="friends-head">
+
         <div>
+
           <h2>👥 Friends</h2>
-          <div class="sub">Friends ke saath monthly progress compare karo.</div>
+
+          <div class="sub">
+            Friends ke saath monthly progress compare karo.
+          </div>
+
         </div>
-        <button id="closeFriends">✕ Close</button>
+
+        <button id="closeFriends">
+          ✕ Close
+        </button>
+
       </div>
+
 
       <div class="friend-search">
-        <input id="friendSearch" type="email" placeholder="Friend ka email">
-        <button id="sendFriendRequest">➕ Send Request</button>
+
+        <input
+          id="friendSearch"
+          type="email"
+          placeholder="Friend ka email"
+        >
+
+        <button id="sendFriendRequest">
+          ➕ Send Request
+        </button>
+
       </div>
+
+
       <div id="friendMessage" class="sub"></div>
 
+
       <h3>📨 Friend Requests</h3>
-      <div id="friendRequests"><p class="empty">Koi pending request nahi hai.</p></div>
+
+      <div id="friendRequests">
+        <p class="empty">
+          Koi pending request nahi hai.
+        </p>
+      </div>
+
 
       <h3>🏆 My Friends</h3>
-      <div id="friendsList"><p class="empty">Abhi koi friend nahi hai.</p></div>
+
+      <div id="friendsList">
+        <p class="empty">
+          Abhi koi friend nahi hai.
+        </p>
+      </div>
+
     </div>
+
 
     <div class="controls">
-      <button id="prev">‹</button>
-      <input id="month" type="month">
-      <button id="next">›</button>
+
+      <button id="prev">
+        ‹
+      </button>
+
+      <input
+        id="month"
+        type="month"
+      >
+
+      <button id="next">
+        ›
+      </button>
+
     </div>
+
 
     <div class="stats">
-      <div class="stat"><b id="rate">0%</b><span>Monthly completion</span></div>
-      <div class="stat"><b id="done">0</b><span>Completed</span></div>
-      <div class="stat"><b id="miss">0</b><span>Missed</span></div>
-      <div class="stat"><b id="streak">0</b><span>Monthly streak</span></div>
-      <div class="stat"><b id="xp">0</b><span>XP</span></div>
-      <div class="stat"><b id="lives">❤️❤️❤️</b><span>Lives</span></div>
+
+      <div class="stat">
+        <b id="rate">0%</b>
+        <span>Monthly completion</span>
+      </div>
+
+      <div class="stat">
+        <b id="done">0</b>
+        <span>Completed</span>
+      </div>
+
+      <div class="stat">
+        <b id="miss">0</b>
+        <span>Missed</span>
+      </div>
+
+      <div class="stat">
+        <b id="streak">0</b>
+        <span>Monthly streak</span>
+      </div>
+
+      <div class="stat">
+        <b id="xp">0</b>
+        <span>XP</span>
+      </div>
+
+      <div class="stat">
+        <b id="lives">❤️❤️❤️</b>
+        <span>Lives</span>
+      </div>
+
     </div>
+
 
     <div class="panel">
+
       <div class="bar">
-        <strong id="monthTitle">August 2026</strong>
+
+        <strong id="monthTitle"></strong>
+
         <form id="add">
-          <input id="task" type="text" placeholder="Task / subject" required>
-          <input id="time" type="time" required>
-          <button type="submit">+ Add task</button>
+
+          <input
+            id="task"
+            type="text"
+            placeholder="Task / subject"
+            required
+          >
+
+          <input
+            id="time"
+            type="time"
+            required
+          >
+
+          <button type="submit">
+            + Add task
+          </button>
+
         </form>
+
       </div>
+
+
       <div class="sub" style="margin-bottom:10px">
-        ⏰ Time field phone ka native scroll/time picker use karega. Yellow cell verification window hai.
+
+        ⏰ Time field phone ka native picker use karega.
+        Yellow cell verification window hai.
+
       </div>
+
+
       <div id="grid" class="table-wrap"></div>
+
     </div>
+
   </div>
+
 </div>
 
+
 <div id="celebrate"></div>
+
 <div id="toast"></div>
-<audio id="tickVoice" src="./tick-voice.wav" preload="auto"></audio>
+
+<audio
+  id="tickVoice"
+  src="./tick-voice.wav"
+  preload="auto"
+></audio>
+
 
 <script>
 "use strict";
 
-const SUPABASE_URL="https://acsokyrhfequnuvtmomx.supabase.co";
-const SUPABASE_KEY="sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let user=null;
-let profile=null;
-let tasks=[];
-let marks={};
-let view=new Date();
+const SUPABASE_URL =
+  "https://acsokyrhfequnuvtmomx.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
+
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+const $ =
+  s => document.querySelector(s);
+
+
+let user = null;
+
+let profile = null;
+
+let tasks = [];
+
+let marks = {};
+
+
+let view = new Date();
+
 view.setDate(1);
 
-let aiObjectModel=null;
-let aiPoseModel=null;
-let verificationRunning=false;
-let verificationTimer=null;
-let verificationStream=null;
-let verificationKey=null;
-let verificationTask=null;
-let tickVoiceUnlocked=false;
-let startupRunning=false;
-const alarmTimers=new Map();
 
-const VERIFY_MINUTES=30;
+let aiObjectModel = null;
 
-const RANKS=[
-  {code:"-A",name:"🤡 Gandu"},
-  {code:"A",name:"😎 Chutiya"},
-  {code:"B",name:"🐃 Matthu"},
-  {code:"C",name:"💪 Mehnatti"},
-  {code:"D",name:"🥷 Jhujharu"},
-  {code:"E",name:"🗿 Dheth"},
-  {code:"F",name:"🧙 Ustaad"},
-  {code:"G",name:"👑 Legend"},
-  {code:"H",name:"🙏 Mahapurush"}
+let aiPoseModel = null;
+
+
+let verificationRunning = false;
+
+let verificationTimer = null;
+
+let verificationStream = null;
+
+let verificationKey = null;
+
+let verificationTask = null;
+
+
+let tickVoiceUnlocked = false;
+
+let signupMode = false;
+
+let startupRunning = false;
+
+
+const alarmTimers =
+  new Map();
+
+
+const VERIFY_MINUTES = 30;
+
+
+/*
+  A-H internal progression codes.
+  Users ko letters directly nahi dikhaye jaate.
+*/
+
+const RANKS = [
+
+  {
+    code:"-A",
+    icon:"🤡",
+    name:"Gandu"
+  },
+
+  {
+    code:"A",
+    icon:"😎",
+    name:"Chutiya"
+  },
+
+  {
+    code:"B",
+    icon:"🐃",
+    name:"Matthu"
+  },
+
+  {
+    code:"C",
+    icon:"💪",
+    name:"Mehnatti"
+  },
+
+  {
+    code:"D",
+    icon:"🥷",
+    name:"Jhujharu"
+  },
+
+  {
+    code:"E",
+    icon:"🗿",
+    name:"Dheth"
+  },
+
+  {
+    code:"F",
+    icon:"🧙",
+    name:"Ustaad"
+  },
+
+  {
+    code:"G",
+    icon:"👑",
+    name:"Legend"
+  },
+
+  {
+    code:"H",
+    icon:"🙏",
+    name:"Mahapurush"
+  }
+
 ];
 
-const $=selector=>document.querySelector(selector);
 
-const loginScreen=$("#loginScreen");
-const app=$("#app");
-const emailInput=$("#email");
-const passwordInput=$("#password");
-const authBtn=$("#authBtn");
-const switchAuth=$("#switchAuth");
-const loginText=$("#loginText");
-const userEmail=$("#userEmail");
-const logoutBtn=$("#logout");
-const friendsBtn=$("#friendsBtn");
-const friendsPanel=$("#friendsPanel");
-const closeFriends=$("#closeFriends");
-const friendSearch=$("#friendSearch");
-const sendFriendRequestBtn=$("#sendFriendRequest");
-const friendMessage=$("#friendMessage");
-const monthInput=$("#month");
-const monthTitle=$("#monthTitle");
-const taskInput=$("#task");
-const timeInput=$("#time");
-const grid=$("#grid");
-const tickVoice=$("#tickVoice");
+const loginScreen =
+  $("#loginScreen");
 
-const pad=n=>String(n).padStart(2,"0");
+const app =
+  $("#app");
 
-function dateKey(d){
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const emailInput =
+  $("#email");
+
+const passwordInput =
+  $("#password");
+
+const authBtn =
+  $("#authBtn");
+
+const switchAuth =
+  $("#switchAuth");
+
+const loginText =
+  $("#loginText");
+
+const loginError =
+  $("#loginError");
+
+const userEmail =
+  $("#userEmail");
+
+const logoutBtn =
+  $("#logout");
+
+
+const friendsBtn =
+  $("#friendsBtn");
+
+const friendsPanel =
+  $("#friendsPanel");
+
+const closeFriends =
+  $("#closeFriends");
+
+const friendSearch =
+  $("#friendSearch");
+
+const sendFriendRequestBtn =
+  $("#sendFriendRequest");
+
+const friendMessage =
+  $("#friendMessage");
+
+
+const monthInput =
+  $("#month");
+
+const grid =
+  $("#grid");
+
+const taskInput =
+  $("#task");
+
+const timeInput =
+  $("#time");
+
+const addForm =
+  $("#add");
+
+const monthTitle =
+  $("#monthTitle");
+
+
+const tickVoice =
+  $("#tickVoice");
+
+
+function pad(n){
+
+  return String(n)
+    .padStart(2,"0");
+
 }
+
+
+function esc(value){
+
+  return String(
+    value ?? ""
+  )
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+
+}
+
 
 function todayKey(){
-  return dateKey(new Date());
+
+  const d =
+    new Date();
+
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
 }
 
-function esc(v){
-  return String(v??"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+
+function monthRequired(y,m){
+
+  const days =
+    new Date(
+      y,
+      m+1,
+      0
+    ).getDate();
+
+  return days === 30
+    ? 27
+    : 28;
+
 }
 
-function toast(text){
-  const el=$("#toast");
-  el.textContent=text;
-  el.style.display="block";
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(
-    ()=>el.style.display="none",
-    2800
-  );
+
+function rankIndex(code){
+
+  const i =
+    RANKS.findIndex(
+      r => r.code === code
+    );
+
+  return i >= 0
+    ? i
+    : 1;
+
 }
 
-function rankIndex(rank){
-  const i=RANKS.findIndex(
-    r=>r.code===rank
-  );
-  return i<0?1:i;
-}
-
-function rankLabel(rank){
-  return RANKS.find(
-    r=>r.code===rank
-  )?.name||RANKS[1].name;
-}
 
 function rankCode(index){
+
   return RANKS[
     Math.max(
       0,
@@ -248,1042 +1170,379 @@ function rankCode(index){
       )
     )
   ].code;
+
 }
 
-function monthRequired(year,month){
-  return new Date(
-    year,
-    month+1,
-    0
-  ).getDate()-3;
+
+function rankInfo(code){
+
+  return RANKS.find(
+    r => r.code === code
+  ) || RANKS[1];
+
 }
 
-function parseTaskTime(value){
-
-  if(!value)
-    return null;
-
-  if(/^\d{2}:\d{2}$/.test(value)){
-
-    const [
-      h,
-      m
-    ]=value.split(":").map(Number);
-
-    return h*60+m;
-  }
-
-  const match=
-    String(value)
-      .trim()
-      .match(
-        /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i
-      );
-
-  if(!match)
-    return null;
-
-  let h=Number(match[1]);
-  const m=Number(match[2]);
-  const ap=(match[3]||"").toUpperCase();
-
-  if(ap==="PM"&&h<12)
-    h+=12;
-
-  if(ap==="AM"&&h===12)
-    h=0;
-
-  return h*60+m;
-}
-
-function displayTime(value){
-
-  const mins=
-    parseTaskTime(value);
-
-  if(mins===null)
-    return value||"";
-
-  let h=
-    Math.floor(mins/60);
-
-  const m=
-    mins%60;
-
-  const ap=
-    h>=12
-      ? "PM"
-      : "AM";
-
-  h=
-    h%12||12;
-
-  return `${h}:${pad(m)} ${ap}`;
-}
 
 function taskType(task){
 
-  const text=
+  const text =
     String(
-      task.name||""
-    ).toLowerCase();
+      task?.name || ""
+    )
+    .toLowerCase();
+
 
   if(
-    /running|run|jog|jogging|दौड़|दौड़/
-      .test(text)
-  )
+    /running|run|jog|jogging|दौड़|दौड़/.test(text)
+  ){
+
     return "running";
 
+  }
+
+
   if(
-    /exercise|workout|gym|push.?up|pushup|squat|yoga/
-      .test(text)
-  )
+    /exercise|workout|gym|push.?up|pushup|squat|yoga/.test(text)
+  ){
+
     return "exercise";
 
+  }
+
+
   if(
-    /water|paani|pani|drink|drinking|hydration|पानी/
-      .test(text)
-  )
+    /water|paani|pani|drink|drinking|hydration|पानी/.test(text)
+  ){
+
     return "water";
 
+  }
+
+
   if(
-    /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/
-      .test(text)
-  )
+    /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/.test(text)
+  ){
+
     return "study";
 
+  }
+
+
   return "general";
+
 }
 
-async function ensureProfile(){
 
-  const {
-    data,
-    error
-  }=
-    await db
-      .from("profiles")
-      .select("*")
-      .eq(
-        "id",
-        user.id
-      )
-      .maybeSingle();
+function parseTaskTime(time){
 
-  if(error)
-    throw error;
+  if(!time){
 
-  if(!data){
-
-    const username=
-      (
-        user.email||
-        "User"
-      )
-        .split("@")[0];
-
-    const {
-      data:created,
-      error:insertError
-    }=
-      await db
-        .from("profiles")
-        .insert({
-          id:user.id,
-          username,
-          email:user.email,
-          rank:"A",
-          lives:3
-        })
-        .select()
-        .single();
-
-    if(insertError)
-      throw insertError;
-
-    profile=
-      created;
-
-  }else{
-
-    profile=
-      data;
-
-    const changes={};
-
-    if(
-      !profile.email&&
-      user.email
-    )
-      changes.email=
-        user.email;
-
-    if(
-      !profile.rank
-    ){
-
-      changes.rank=
-        "A";
-
-      profile.rank=
-        "A";
-
-    }
-
-    if(
-      profile.lives===null||
-      profile.lives===undefined
-    ){
-
-      changes.lives=
-        3;
-
-      profile.lives=
-        3;
-
-    }
-
-    if(
-      Object.keys(changes).length
-    ){
-
-      const {
-        data:updated,
-        error:updateError
-      }=
-        await db
-          .from("profiles")
-          .update(changes)
-          .eq(
-            "id",
-            user.id
-          )
-          .select()
-          .single();
-
-      if(updateError)
-        throw updateError;
-
-      profile=
-        updated;
-
-    }
+    return null;
 
   }
 
-}
 
-async function loadData(){
+  const m =
+    String(time)
+      .match(/^(\d{1,2}):(\d{2})/);
 
-  const {
-    data:taskData,
-    error:taskError
-  }=
-    await db
-      .from("tasks")
-      .select("*")
-      .eq(
-        "user_id",
-        user.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending:true
-        }
-      );
 
-  if(taskError)
-    throw taskError;
+  if(!m){
 
-  tasks=
-    taskData||[];
+    return null;
 
-  const {
-    data:markData,
-    error:markError
-  }=
-    await db
-      .from("marks")
-      .select("*")
-      .eq(
-        "user_id",
-        user.id
-      );
-
-  if(markError)
-    throw markError;
-
-  marks={};
-
-  (
-    markData||[]
-  ).forEach(
-    m=>{
-      marks[
-        `${m.task_id}|${m.mark_date}`
-      ]=
-        m.completed===true
-          ? 1
-          : 2;
-    }
-  );
-
-}
-
-async function saveMark(
-  key,
-  value
-){
-
-  const [
-    taskId,
-    date
-  ]=
-    key.split("|");
-
-  if(value===0){
-
-    const {
-      error
-    }=
-      await db
-        .from("marks")
-        .delete()
-        .eq(
-          "user_id",
-          user.id
-        )
-        .eq(
-          "task_id",
-          taskId
-        )
-        .eq(
-          "mark_date",
-          date
-        );
-
-    if(error)
-      throw error;
-
-    delete marks[key];
-
-    return;
   }
 
-  const {
-    error
-  }=
-    await db
-      .from("marks")
-      .upsert(
-        {
-          user_id:user.id,
-          task_id:taskId,
-          mark_date:date,
-          completed:
-            value===1
-        },
-        {
-          onConflict:
-            "user_id,task_id,mark_date"
-        }
-      );
 
-  if(error)
-    throw error;
+  const h =
+    Number(m[1]);
 
-  marks[key]=value;
-}
+  const min =
+    Number(m[2]);
 
-function monthStats(){
 
-  const y=
-    view.getFullYear();
-
-  const m=
-    view.getMonth();
-
-  const days=
-    new Date(
-      y,
-      m+1,
-      0
-    ).getDate();
-
-  let completed=0;
-  let missed=0;
-  let best=0;
-  let current=0;
-
-  for(
-    let d=1;
-    d<=days;
-    d++
+  if(
+    h > 23 ||
+    min > 59
   ){
 
-    let allDone=
-      tasks.length>0;
-
-    for(
-      const task of tasks
-    ){
-
-      const key=
-        `${task.id}|${y}-${pad(m+1)}-${pad(d)}`;
-
-      const value=
-        marks[key]||0;
-
-      if(value===1)
-        completed++;
-
-      if(value===2)
-        missed++;
-
-      if(value!==1)
-        allDone=false;
-
-    }
-
-    if(allDone){
-
-      current++;
-
-      best=
-        Math.max(
-          best,
-          current
-        );
-
-    }else{
-
-      current=0;
-
-    }
+    return null;
 
   }
 
-  const total=
-    completed+
-    missed;
 
-  return {
-    completed,
-    missed,
-    best,
-    days,
-    rate:
-      total
-        ? Math.round(
-            completed/
-            total*
-            100
-          )
-        : 0
-  };
+  return h*60+min;
 
 }
 
-function updateStats(){
 
-  const s=
-    monthStats();
+function displayTime(time){
 
-  $("#rate").textContent=
-    s.rate+"%";
+  const mins =
+    parseTaskTime(time);
 
-  $("#done").textContent=
-    s.completed;
 
-  $("#miss").textContent=
-    s.missed;
+  if(mins === null){
 
-  $("#streak").textContent=
-    s.best;
-
-  $("#xp").textContent=
-    s.completed*10+
-    s.best*5;
-
-  updateRankUI();
-}
-
-function updateRankUI(){
-
-  if(!profile)
-    return;
-
-  const rank=
-    profile.rank||"A";
-
-  const lives=
-    Math.max(
-      0,
-      Number(
-        profile.lives??3
-      )
-    );
-
-  const now=
-    new Date();
-
-  const required=
-    monthRequired(
-      now.getFullYear(),
-      now.getMonth()
-    );
-
-  $("#rankCode").textContent=
-    rank;
-
-  $("#rankName").textContent=
-    rankLabel(rank);
-
-  $("#rankMeta").textContent=
-    `${"❤️".repeat(lives)||"💔"} ${lives} lives • ${required} days streak for next rank`;
-
-  $("#lives").textContent=
-    lives
-      ? "❤️".repeat(lives)
-      : "💔";
-
-}
-
-function currentMonthStreak(){
-  return monthStats().best;
-}
-
-async function applyRankUp(){
-
-  if(
-    !profile||
-    !tasks.length
-  )
-    return;
-
-  const now=
-    new Date();
-
-  const y=
-    now.getFullYear();
-
-  const m=
-    now.getMonth();
-
-  const required=
-    monthRequired(
-      y,
-      m
-    );
-
-  const streak=
-    currentMonthStreak();
-
-  const actionKey=
-    `rankup:${user.id}:${y}-${pad(m+1)}`;
-
-  if(
-    streak<
-      required||
-    localStorage.getItem(
-      actionKey
-    )==="1"
-  )
-    return;
-
-  const rank=
-    profile.rank||
-    "A";
-
-  const idx=
-    rankIndex(rank);
-
-  if(
-    idx>=RANKS.length-1
-  ){
-
-    localStorage.setItem(
-      actionKey,
-      "1"
-    );
-
-    return;
-  }
-
-  const newRank=
-    rankCode(
-      idx+1
-    );
-
-  const {
-    data,
-    error
-  }=
-    await db
-      .from("profiles")
-      .update({
-        rank:newRank,
-        lives:3
-      })
-      .eq(
-        "id",
-        user.id
-      )
-      .select()
-      .single();
-
-  if(error){
-
-    console.error(
-      "Rank-up",
-      error
-    );
-
-    return;
-
-  }
-
-  profile=
-    data;
-
-  localStorage.setItem(
-    actionKey,
-    "1"
-  );
-
-  updateRankUI();
-
-  celebrate(
-    newRank
-  );
-
-}
-
-async function loseLife(
-  key
-){
-
-  const onceKey=
-    `lifeloss:${user.id}:${key}`;
-
-  if(
-    localStorage.getItem(
-      onceKey
-    )==="1"
-  )
-    return;
-
-  localStorage.setItem(
-    onceKey,
-    "1"
-  );
-
-  let lives=
-    Math.max(
-      0,
-      Number(
-        profile?.lives??
-        3
-      )-1
-    );
-
-  let rank=
-    profile?.rank||
-    "A";
-
-  if(
-    lives===0
-  ){
-
-    if(
-      rank==="A"
-    )
-      rank="-A";
-
-    else if(
-      rank!=="-A"
-    )
-      rank=
-        rankCode(
-          rankIndex(rank)-1
-        );
-
-    lives=3;
-
-    toast(
-      "💔 Lives khatam — 1 rank down."
+    return String(
+      time || ""
     );
 
   }
 
-  try{
 
-    const {
-      data,
-      error
-    }=
-      await db
-        .from("profiles")
-        .update({
-          rank,
-          lives
-        })
-        .eq(
-          "id",
-          user.id
-        )
-        .select()
-        .single();
-
-    if(error)
-      throw error;
-
-    profile=
-      data;
-
-    updateRankUI();
-
-  }catch(error){
-
-    console.error(
-      "Life update",
-      error
-    );
-
-  }
-
-}
-
-async function autoMiss(
-  task,
-  date
-){
-
-  const key=
-    `${task.id}|${date}`;
-
-  if(
-    marks[key]
-  )
-    return;
-
-  try{
-
-    await saveMark(
-      key,
-      2
-    );
-
-    await loseLife(
-      key
-    );
-
-  }catch(error){
-
-    console.error(
-      "Auto miss",
-      error
-    );
-
-  }
-
-}
-
-function celebrate(
-  newRank
-){
-
-  const box=
-    $("#celebrate");
-
-  box.innerHTML=
-    "";
-
-  const title=
-    document.createElement(
-      "div"
-    );
-
-  title.className=
-    "rank-message";
-
-  title.innerHTML=
-    `🎉 RANK UP! ${esc(newRank)} ${esc(rankLabel(newRank))}`;
-
-  box.appendChild(
-    title
-  );
-
-  const icons=[
-    "🎉",
-    "🎊",
-    "✨",
-    "⭐",
-    "🥳",
-    "🎈"
-  ];
-
-  for(
-    let i=0;
-    i<45;
-    i++
-  ){
-
-    const p=
-      document.createElement(
-        "div"
-      );
-
-    p.className=
-      "confetti";
-
-    p.textContent=
-      icons[
-        i%icons.length
-      ];
-
-    p.style.left=
-      Math.random()*100+
-      "%";
-
-    p.style.top=
-      -10-
-      Math.random()*20+
-      "%";
-
-    p.style.animationDelay=
-      Math.random()*.7+
-      "s";
-
-    box.appendChild(
-      p
-    );
-
-  }
-
-  setTimeout(
-    ()=>
-      box.innerHTML="",
-    3200
-  );
-
-}
-
-function verificationStatus(
-  task,
-  date
-){
-
-  const key=
-    `${task.id}|${date}`;
-
-  const value=
-    marks[key]||0;
-
-  if(
-    value===1
-  )
-    return "done";
-
-  if(
-    value===2
-  )
-    return "expired";
-
-  const mins=
-    parseTaskTime(
-      task.time
-    );
-
-  if(
-    mins===null
-  )
-    return "window";
-
-  const target=
-    new Date(
-      `${date}T00:00:00`
-    );
-
-  target.setHours(
+  let h =
     Math.floor(
       mins/60
-    ),
-    mins%60,
-    0,
-    0
-  );
+    );
 
-  const now=
-    new Date();
+  const m =
+    mins % 60;
 
-  const start=
-    target.getTime();
 
-  const end=
-    start+
-    VERIFY_MINUTES*
-    60000;
+  const ap =
+    h >= 12
+      ? "PM"
+      : "AM";
 
-  if(
-    date!==
-    todayKey()
-  )
-    return target>now
-      ? "future"
-      : "expired";
 
-  if(
-    now.getTime()<
-    start
-  )
-    return "future";
+  h =
+    h % 12 ||
+    12;
 
-  if(
-    now.getTime()<=
-    end
-  )
-    return "window";
 
-  return "expired";
+  return `${h}:${pad(m)} ${ap}`;
 
 }
+
+
+function taskDateKey(
+  task,
+  date
+){
+
+  return `${task.id}|${date}`;
+
+}
+
+
+function showLoginError(
+  message
+){
+
+  loginError.textContent =
+    message;
+
+  loginError.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+function clearLoginError(){
+
+  loginError.textContent =
+    "";
+
+  loginError.classList.add(
+    "hidden"
+  );
+
+}
+
+
+function toast(message){
+
+  const box =
+    $("#toast");
+
+
+  box.textContent =
+    message;
+
+
+  box.style.display =
+    "block";
+
+
+  clearTimeout(
+    box._timer
+  );
+
+
+  box._timer =
+    setTimeout(
+      () => {
+        box.style.display =
+          "none";
+      },
+      3000
+    );
+
+}
+
 
 function unlockTickVoice(){
 
-  if(
-    tickVoiceUnlocked
-  )
+  if(tickVoiceUnlocked){
+
     return;
-
-  try{
-
-    tickVoice.volume=
-      0;
-
-    const p=
-      tickVoice.play();
-
-    if(p){
-
-      p.then(
-        () => {
-
-          tickVoice.pause();
-
-          tickVoice.currentTime=
-            0;
-
-          tickVoice.volume=
-            1;
-
-          tickVoiceUnlocked=
-            true;
-
-        }
-      ).catch(
-        () => {
-
-          tickVoice.volume=
-            1;
-
-        }
-      );
-
-    }
-
-  }catch(error){
-
-    console.log(
-      error
-    );
 
   }
 
+
+  try{
+
+    tickVoice.volume = 0;
+
+
+    const p =
+      tickVoice.play();
+
+
+    if(p){
+
+      p.then(() => {
+
+        tickVoice.pause();
+
+        tickVoice.currentTime =
+          0;
+
+        tickVoice.volume =
+          1;
+
+        tickVoiceUnlocked =
+          true;
+
+      }).catch(() => {
+
+        tickVoice.volume =
+          1;
+
+      });
+
+    }
+
+  }catch(_){}
+
 }
+
 
 function playTickVoice(){
 
   try{
 
-    tickVoice.currentTime=
+    tickVoice.currentTime =
       0;
 
-    tickVoice.volume=
+    tickVoice.volume =
       1;
 
-    const p=
+
+    const p =
       tickVoice.play();
+
 
     if(p){
 
       p.catch(
-        error =>
-          console.log(
-            "Voice playback",
-            error
-          )
+        e => console.log(
+          "Voice playback:",
+          e
+        )
       );
 
     }
 
-  }catch(error){
+  }catch(e){
 
     console.log(
-      "Voice playback",
-      error
+      "Voice playback:",
+      e
     );
 
   }
 
 }
 
-async function requestNotificationPermission(){
+
+function requestNotificationPermission(){
+
+  /*
+    IMPORTANT:
+    Login/startup is never blocked
+    by Notification permission.
+  */
 
   if(
-    "Notification" in
-    window &&
-    Notification.permission===
-      "default"
+    !("Notification" in window)
   ){
 
-    try{
-
-      await Notification
-        .requestPermission();
-
-    }catch(_){}
+    return;
 
   }
 
+
+  if(
+    Notification.permission !==
+    "default"
+  ){
+
+    return;
+
+  }
+
+
+  Promise
+    .resolve()
+    .then(
+      () =>
+        Notification.requestPermission()
+    )
+    .catch(
+      () => {}
+    );
+
 }
+
 
 function alarmBeep(){
 
   try{
 
-    const AC=
-      window.AudioContext||
+    const AC =
+      window.AudioContext ||
       window.webkitAudioContext;
 
-    if(!AC)
+
+    if(!AC){
+
       return;
 
-    const ctx=
+    }
+
+
+    const ctx =
       new AC();
 
-    const osc=
+
+    const osc =
       ctx.createOscillator();
 
-    const gain=
+
+    const gain =
       ctx.createGain();
 
-    osc.frequency.value=
+
+    osc.frequency.value =
       880;
 
-    gain.gain.value=
+
+    gain.gain.value =
       .12;
+
 
     osc.connect(gain);
 
@@ -1291,32 +1550,30 @@ function alarmBeep(){
       ctx.destination
     );
 
+
     osc.start();
 
-    setTimeout(
-      () => {
 
-        osc.stop();
+    setTimeout(() => {
 
-        ctx.close()
-          .catch(
-            () => {}
-          );
+      osc.stop();
 
-      },
-      700
-    );
+      ctx.close()
+        .catch(() => {});
 
-  }catch(error){
+    },700);
+
+  }catch(e){
 
     console.log(
-      "Alarm",
-      error
+      "Alarm:",
+      e
     );
 
   }
 
 }
+
 
 function sendTaskNotification(
   task
@@ -1324,10 +1581,10 @@ function sendTaskNotification(
 
   alarmBeep();
 
+
   if(
-    "Notification" in
-    window &&
-    Notification.permission===
+    "Notification" in window &&
+    Notification.permission ===
       "granted"
   ){
 
@@ -1341,11 +1598,9 @@ function sendTaskNotification(
         }
       );
 
-    }catch(error){
+    }catch(e){
 
-      console.log(
-        error
-      );
+      console.log(e);
 
     }
 
@@ -1353,118 +1608,1150 @@ function sendTaskNotification(
 
 }
 
-function checkAlarmWindows(){
 
-  if(
-    !user||
-    !tasks.length
-  )
+function verificationStatus(
+  task,
+  date
+){
+
+  const key =
+    taskDateKey(
+      task,
+      date
+    );
+
+
+  const value =
+    marks[key] || 0;
+
+
+  if(value === 1){
+
+    return "done";
+
+  }
+
+
+  if(value === 2){
+
+    return "expired";
+
+  }
+
+
+  const mins =
+    parseTaskTime(task.time);
+
+
+  if(mins === null){
+
+    return "window";
+
+  }
+
+
+  const target =
+    new Date(
+      `${date}T00:00:00`
+    );
+
+
+  target.setHours(
+    Math.floor(mins/60),
+    mins%60,
+    0,
+    0
+  );
+
+
+  const now =
+    new Date();
+
+
+  const start =
+    target.getTime();
+
+
+  const end =
+    start +
+    VERIFY_MINUTES*60000;
+
+
+  if(date !== todayKey()){
+
+    return target > now
+      ? "future"
+      : "expired";
+
+  }
+
+
+  if(now.getTime() < start){
+
+    return "future";
+
+  }
+
+
+  if(now.getTime() <= end){
+
+    return "window";
+
+  }
+
+
+  return "expired";
+
+}
+
+
+async function ensureProfile(){
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .select("*")
+      .eq("id",user.id)
+      .maybeSingle();
+
+
+  if(error){
+
+    throw error;
+
+  }
+
+
+  if(!data){
+
+    const username =
+      (user.email || "User")
+      .split("@")[0];
+
+
+    const {
+      data:created,
+      error:insertError
+    } =
+      await db
+        .from("profiles")
+        .insert({
+          id:user.id,
+          username,
+          email:user.email,
+          rank:"A",
+          lives:3
+        })
+        .select()
+        .single();
+
+
+    if(insertError){
+
+      throw insertError;
+
+    }
+
+
+    profile =
+      created;
+
+
     return;
 
-  const today=
-    todayKey();
+  }
 
-  for(
-    const task of tasks
+
+  profile =
+    data;
+
+
+  const changes =
+    {};
+
+
+  if(
+    !profile.email &&
+    user.email
   ){
 
-    const key=
-      `${task.id}|${today}`;
+    changes.email =
+      user.email;
 
-    if(
-      marks[key]
+  }
+
+
+  if(!profile.rank){
+
+    changes.rank =
+      "A";
+
+    profile.rank =
+      "A";
+
+  }
+
+
+  if(
+    profile.lives === null ||
+    profile.lives === undefined
+  ){
+
+    changes.lives =
+      3;
+
+    profile.lives =
+      3;
+
+  }
+
+
+  if(
+    Object.keys(changes).length
+  ){
+
+    const {
+      data:updated,
+      error:updateError
+    } =
+      await db
+        .from("profiles")
+        .update(changes)
+        .eq("id",user.id)
+        .select()
+        .single();
+
+
+    if(updateError){
+
+      throw updateError;
+
+    }
+
+
+    profile =
+      updated;
+
+  }
+
+}
+
+
+async function loadData(){
+
+  const {
+    data:taskData,
+    error:taskError
+  } =
+    await db
+      .from("tasks")
+      .select("*")
+      .eq("user_id",user.id)
+      .order(
+        "created_at",
+        {
+          ascending:true
+        }
+      );
+
+
+  if(taskError){
+
+    throw taskError;
+
+  }
+
+
+  tasks =
+    taskData || [];
+
+
+  const {
+    data:markData,
+    error:markError
+  } =
+    await db
+      .from("marks")
+      .select("*")
+      .eq("user_id",user.id);
+
+
+  if(markError){
+
+    throw markError;
+
+  }
+
+
+  marks =
+    {};
+
+
+  (markData || [])
+    .forEach(m => {
+
+      marks[
+        `${m.task_id}|${m.mark_date}`
+      ] =
+        m.completed === true
+          ? 1
+          : 2;
+
+    });
+
+}
+
+
+async function saveMark(
+  key,
+  value
+){
+
+  const [
+    taskId,
+    date
+  ] =
+    key.split("|");
+
+
+  if(value === 0){
+
+    const {error} =
+      await db
+        .from("marks")
+        .delete()
+        .eq("user_id",user.id)
+        .eq("task_id",taskId)
+        .eq("mark_date",date);
+
+
+    if(error){
+
+      throw error;
+
+    }
+
+
+    delete marks[key];
+
+    return;
+
+  }
+
+
+  const {error} =
+    await db
+      .from("marks")
+      .upsert(
+        {
+          user_id:user.id,
+          task_id:taskId,
+          mark_date:date,
+          completed:value === 1
+        },
+        {
+          onConflict:
+            "user_id,task_id,mark_date"
+        }
+      );
+
+
+  if(error){
+
+    throw error;
+
+  }
+
+
+  marks[key] =
+    value;
+
+}
+
+
+function monthStats(){
+
+  const y =
+    view.getFullYear();
+
+
+  const m =
+    view.getMonth();
+
+
+  const days =
+    new Date(
+      y,
+      m+1,
+      0
+    ).getDate();
+
+
+  let completed =
+    0;
+
+
+  let missed =
+    0;
+
+
+  let best =
+    0;
+
+
+  let current =
+    0;
+
+
+  for(
+    let d=1;
+    d<=days;
+    d++
+  ){
+
+    let allDone =
+      tasks.length > 0;
+
+
+    for(
+      const task
+      of tasks
     ){
 
-      if(
-        alarmTimers.has(key)
-      ){
+      const key =
+        `${task.id}|${y}-${pad(m+1)}-${pad(d)}`;
 
-        clearInterval(
-          alarmTimers.get(
-            key
-          )
-        );
 
-        alarmTimers.delete(
-          key
-        );
+      const value =
+        marks[key] || 0;
+
+
+      if(value === 1){
+
+        completed++;
 
       }
 
-      continue;
+
+      if(value === 2){
+
+        missed++;
+
+      }
+
+
+      if(value !== 1){
+
+        allDone =
+          false;
+
+      }
+
     }
+
+
+    if(allDone){
+
+      current++;
+
+      best =
+        Math.max(
+          best,
+          current
+        );
+
+    }else{
+
+      current =
+        0;
+
+    }
+
+  }
+
+
+  const total =
+    completed +
+    missed;
+
+
+  return {
+
+    completed,
+
+    missed,
+
+    best,
+
+    days,
+
+    rate:
+      total
+        ? Math.round(
+            completed /
+            total *
+            100
+          )
+        : 0
+
+  };
+
+}
+
+
+function monthlyXP(stats){
+
+  return (
+    stats.completed *
+    10
+  ) +
+  (
+    stats.best *
+    25
+  );
+
+}
+
+
+function updateStats(){
+
+  const s =
+    monthStats();
+
+
+  $("#rate")
+    .textContent =
+    `${s.rate}%`;
+
+
+  $("#done")
+    .textContent =
+    s.completed;
+
+
+  $("#miss")
+    .textContent =
+    s.missed;
+
+
+  $("#streak")
+    .textContent =
+    s.best;
+
+
+  $("#xp")
+    .textContent =
+    monthlyXP(s);
+
+
+  updateRankUI();
+
+}
+
+
+function updateRankUI(){
+
+  const info =
+    rankInfo(
+      profile?.rank ||
+      "A"
+    );
+
+
+  const lives =
+    Math.max(
+      0,
+      Number(
+        profile?.lives ??
+        3
+      )
+    );
+
+
+  const required =
+    monthRequired(
+      view.getFullYear(),
+      view.getMonth()
+    );
+
+
+  $("#rankIcon")
+    .textContent =
+    info.icon;
+
+
+  $("#rankName")
+    .textContent =
+    info.name;
+
+
+  $("#rankMeta")
+    .textContent =
+    `${
+      lives
+        ? "❤️".repeat(lives)
+        : "💔"
+    } ${lives} lives • ${required} days streak for next rank`;
+
+
+  $("#lives")
+    .textContent =
+    lives
+      ? "❤️".repeat(lives)
+      : "💔";
+
+}
+
+
+function currentMonthStreak(){
+
+  return monthStats().best;
+
+}
+
+
+async function applyRankUp(){
+
+  if(
+    !profile ||
+    !tasks.length
+  ){
+
+    return;
+
+  }
+
+
+  const now =
+    new Date();
+
+
+  const y =
+    now.getFullYear();
+
+
+  const m =
+    now.getMonth();
+
+
+  const required =
+    monthRequired(
+      y,
+      m
+    );
+
+
+  const streak =
+    currentMonthStreak();
+
+
+  if(streak < required){
+
+    return;
+
+  }
+
+
+  const actionKey =
+    `rankup:${user.id}:${y}-${pad(m+1)}`;
+
+
+  if(
+    localStorage.getItem(
+      actionKey
+    ) === "1"
+  ){
+
+    return;
+
+  }
+
+
+  const oldRank =
+    profile.rank ||
+    "A";
+
+
+  const idx =
+    rankIndex(oldRank);
+
+
+  if(
+    idx >= RANKS.length-1
+  ){
+
+    localStorage.setItem(
+      actionKey,
+      "1"
+    );
+
+    return;
+
+  }
+
+
+  const newRank =
+    rankCode(
+      idx+1
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .update({
+        rank:newRank,
+        lives:3
+      })
+      .eq("id",user.id)
+      .select()
+      .single();
+
+
+  if(error){
+
+    console.error(
+      "Rank-up:",
+      error
+    );
+
+    return;
+
+  }
+
+
+  profile =
+    data;
+
+
+  localStorage.setItem(
+    actionKey,
+    "1"
+  );
+
+
+  updateRankUI();
+
+  celebrate(
+    newRank
+  );
+
+}
+
+
+async function loseLife(
+  key
+){
+
+  const onceKey =
+    `lifeloss:${user.id}:${key}`;
+
+
+  if(
+    localStorage.getItem(
+      onceKey
+    ) === "1"
+  ){
+
+    return;
+
+  }
+
+
+  localStorage.setItem(
+    onceKey,
+    "1"
+  );
+
+
+  let lives =
+    Math.max(
+      0,
+      Number(
+        profile?.lives ??
+        3
+      ) - 1
+    );
+
+
+  let rank =
+    profile?.rank ||
+    "A";
+
+
+  if(lives === 0){
+
+    const idx =
+      rankIndex(rank);
+
+
+    rank =
+      rank === "-A"
+        ? "-A"
+        : rankCode(
+            Math.max(
+              0,
+              idx-1
+            )
+          );
+
+
+    lives =
+      3;
+
+
+    toast(
+      "💔 Lives khatam — 1 rank down."
+    );
+
+  }
+
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+      await db
+        .from("profiles")
+        .update({
+          rank,
+          lives
+        })
+        .eq("id",user.id)
+        .select()
+        .single();
+
+
+    if(error){
+
+      throw error;
+
+    }
+
+
+    profile =
+      data;
+
+
+    updateRankUI();
+
+  }catch(error){
+
+    console.error(
+      "Life update:",
+      error
+    );
+
+  }
+
+}
+
+
+function celebrate(
+  newRank
+){
+
+  const box =
+    $("#celebrate");
+
+
+  box.innerHTML =
+    "";
+
+
+  const title =
+    document.createElement(
+      "div"
+    );
+
+
+  title.className =
+    "rank-message";
+
+
+  const info =
+    rankInfo(
+      newRank
+    );
+
+
+  title.textContent =
+    `🎉 RANK UP! ${info.icon} ${info.name}`;
+
+
+  box.appendChild(
+    title
+  );
+
+
+  const icons =
+    [
+      "🎉",
+      "🎊",
+      "✨",
+      "⭐",
+      "🥳",
+      "🎈"
+    ];
+
+
+  for(
+    let i=0;
+    i<45;
+    i++
+  ){
+
+    const p =
+      document.createElement(
+        "div"
+      );
+
+
+    p.className =
+      "confetti";
+
+
+    p.textContent =
+      icons[
+        i %
+        icons.length
+      ];
+
+
+    p.style.left =
+      Math.random() *
+      100 +
+      "%";
+
+
+    p.style.top =
+      -10 -
+      Math.random() *
+      20 +
+      "%";
+
+
+    p.style.animationDelay =
+      Math.random() *
+      .7 +
+      "s";
+
+
+    box.appendChild(
+      p
+    );
+
+  }
+
+
+  setTimeout(
+    () =>
+      box.innerHTML =
+      "",
+    3200
+  );
+
+}
+
+
+async function checkExpiredTasks(){
+
+  if(
+    !user ||
+    !tasks.length
+  ){
+
+    return;
+
+  }
+
+
+  const today =
+    todayKey();
+
+
+  let changed =
+    false;
+
+
+  for(
+    const task
+    of tasks
+  ){
+
+    const key =
+      taskDateKey(
+        task,
+        today
+      );
+
+
+    if(marks[key]){
+
+      continue;
+
+    }
+
 
     if(
       verificationStatus(
         task,
         today
-      )!==
-      "window"
-    )
-      continue;
-
-    if(
-      !alarmTimers.has(key)
+      ) === "expired"
     ){
 
-      sendTaskNotification(
-        task
+      await autoMiss(
+        task,
+        today
       );
 
-      const timer=
-        setInterval(
-          () => {
 
-            if(
-              marks[key]||
-              verificationStatus(
-                task,
-                today
-              )!==
-                "window"
-            ){
-
-              clearInterval(
-                timer
-              );
-
-              alarmTimers.delete(
-                key
-              );
-
-              return;
-
-            }
-
-            sendTaskNotification(
-              task
-            );
-
-          },
-          300000
-        );
-
-      alarmTimers.set(
-        key,
-        timer
-      );
+      changed =
+        true;
 
     }
 
   }
 
+
+  if(changed){
+
+    render();
+
+  }
+
 }
+
+
+async function autoMiss(
+  task,
+  date
+){
+
+  const key =
+    taskDateKey(
+      task,
+      date
+    );
+
+
+  if(marks[key]){
+
+    return;
+
+  }
+
+
+  try{
+
+    await saveMark(
+      key,
+      2
+    );
+
+
+    await loseLife(
+      key
+    );
+
+  }catch(error){
+
+    console.error(
+      "Auto miss:",
+      error
+    );
+
+  }
+
+}
+
+
+async function completeVerifiedTask(
+  key
+){
+
+  if(
+    marks[key] === 1
+  ){
+
+    return;
+
+  }
+
+
+  try{
+
+    await saveMark(
+      key,
+      1
+    );
+
+
+    /*
+      User ki exact recording.
+      Automatic recording nahi.
+    */
+
+    playTickVoice();
+
+
+    render();
+
+
+    await applyRankUp();
+
+
+    toast(
+      "✅ Verified! ✓ saved + voice played."
+    );
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    alert(
+      "Completion save nahi hua: " +
+      error.message
+    );
+
+  }
+
+}
+
 
 async function loadAI(){
 
   if(
-    typeof tf!=="undefined"
-  )
-    await tf.ready();
+    typeof tf ===
+    "undefined"
+  ){
+
+    throw new Error(
+      "TensorFlow.js load nahi hua."
+    );
+
+  }
+
+
+  await tf.ready();
+
 
   if(
-    typeof cocoSsd==="undefined"||
-    typeof poseDetection==="undefined"
+    typeof cocoSsd ===
+      "undefined" ||
+    typeof poseDetection ===
+      "undefined"
   ){
 
     throw new Error(
@@ -1473,25 +2760,25 @@ async function loadAI(){
 
   }
 
-  if(
-    !aiObjectModel
-  ){
 
-    aiObjectModel=
+  if(!aiObjectModel){
+
+    aiObjectModel =
       await cocoSsd.load();
 
   }
 
-  if(
-    !aiPoseModel
-  ){
 
-    aiPoseModel=
+  if(!aiPoseModel){
+
+    aiPoseModel =
       await poseDetection
         .createDetector(
+
           poseDetection
             .SupportedModels
             .MoveNet,
+
           {
             modelType:
               poseDetection
@@ -1499,59 +2786,439 @@ async function loadAI(){
                 .modelType
                 .SINGLEPOSE_LIGHTNING
           }
+
         );
 
   }
 
 }
 
+
+async function detectObjectList(
+  video
+){
+
+  if(!aiObjectModel){
+
+    return [];
+
+  }
+
+
+  return await aiObjectModel
+    .detect(video);
+
+}
+
+
+function bestConfidence(
+  predictions,
+  names,
+  minScore
+){
+
+  let best =
+    0;
+
+
+  for(
+    const p
+    of predictions
+  ){
+
+    if(
+      names.includes(
+        p.class
+      )
+    ){
+
+      best =
+        Math.max(
+          best,
+          Number(
+            p.score || 0
+          )
+        );
+
+    }
+
+  }
+
+
+  return best >= minScore
+    ? best
+    : 0;
+
+}
+
+
+async function verifyFrame(
+  task,
+  video,
+  previousPoints
+){
+
+  const type =
+    taskType(task);
+
+
+  /*
+    WATER:
+    Person detection mandatory nahi hai.
+  */
+
+  if(
+    type === "water"
+  ){
+
+    const predictions =
+      await detectObjectList(
+        video
+      );
+
+
+    const confidence =
+      bestConfidence(
+        predictions,
+        [
+          "bottle",
+          "cup"
+        ],
+        0.28
+      );
+
+
+    return {
+
+      valid:
+        confidence > 0,
+
+      points:
+        previousPoints,
+
+      reason:
+        confidence
+          ? `✅ Bottle/cup detected (${Math.round(confidence*100)}%).`
+          : "💧 Bottle ya cup camera me clearly dikhao."
+
+    };
+
+  }
+
+
+  const predictions =
+    await detectObjectList(
+      video
+    );
+
+
+  const personConfidence =
+    bestConfidence(
+      predictions,
+      ["person"],
+      0.35
+    );
+
+
+  if(!personConfidence){
+
+    return {
+
+      valid:false,
+
+      points:
+        previousPoints,
+
+      reason:
+        "🙂 Camera me person clearly dikhao."
+
+    };
+
+  }
+
+
+  if(
+    type === "general"
+  ){
+
+    return {
+
+      valid:true,
+
+      points:
+        previousPoints,
+
+      reason:
+        "✅ Person detected."
+
+    };
+
+  }
+
+
+  if(
+    type === "study"
+  ){
+
+    const hasLaptop =
+      bestConfidence(
+        predictions,
+        ["laptop"],
+        0.30
+      ) > 0;
+
+
+    const hasBook =
+      bestConfidence(
+        predictions,
+        ["book"],
+        0.25
+      ) > 0;
+
+
+    return {
+
+      valid:
+        hasLaptop ||
+        hasBook,
+
+      points:
+        previousPoints,
+
+      reason:
+        (
+          hasLaptop ||
+          hasBook
+        )
+          ? "✅ Study setup detected."
+          : "📚 Laptop ya book camera me dikhao."
+
+    };
+
+  }
+
+
+  if(
+    type === "running" ||
+    type === "exercise"
+  ){
+
+    if(!aiPoseModel){
+
+      return {
+
+        valid:false,
+
+        points:
+          previousPoints,
+
+        reason:
+          "🤖 Pose model ready nahi hai."
+
+      };
+
+    }
+
+
+    let points =
+      null;
+
+
+    try{
+
+      const poses =
+        await aiPoseModel
+          .estimatePoses(
+            video
+          );
+
+
+      points =
+        (
+          poses[0]?.keypoints ||
+          []
+        )
+        .filter(
+          p =>
+            Number(
+              p.score || 0
+            ) > 0.30
+        )
+        .reduce(
+          (
+            acc,
+            p
+          ) => {
+
+            acc[p.name] = {
+
+              x:p.x,
+
+              y:p.y
+
+            };
+
+
+            return acc;
+
+          },
+          {}
+        );
+
+    }catch(error){
+
+      console.log(
+        "Pose:",
+        error
+      );
+
+    }
+
+
+    let movement =
+      0;
+
+
+    if(
+      previousPoints &&
+      points
+    ){
+
+      let total =
+        0;
+
+
+      let count =
+        0;
+
+
+      for(
+        const name
+        of Object.keys(
+          points
+        )
+      ){
+
+        if(
+          previousPoints[name]
+        ){
+
+          total +=
+            Math.hypot(
+
+              points[name].x -
+              previousPoints[name].x,
+
+              points[name].y -
+              previousPoints[name].y
+
+            );
+
+
+          count++;
+
+        }
+
+      }
+
+
+      if(count){
+
+        movement =
+          total /
+          count;
+
+      }
+
+    }
+
+
+    return {
+
+      valid:
+        movement > 3,
+
+      points,
+
+      reason:
+        movement > 3
+          ? "✅ Movement detected."
+          : `🏃 Movement chahiye (${Math.round(movement)}).`
+
+    };
+
+  }
+
+
+  return {
+
+    valid:true,
+
+    points:
+      previousPoints,
+
+    reason:
+      "✅ Activity ready."
+
+  };
+
+}
+
+
 function createVerifyModal(
   task
 ){
 
-  const old=
+  const old =
     $("#verificationOverlay");
 
-  if(old)
+
+  if(old){
+
     old.remove();
 
-  const type=
-    taskType(
-      task
-    );
+  }
 
-  const instructions={
 
-    running:
-      "🏃 Running movement camera me clearly dikhao.",
+  const type =
+    taskType(task);
 
-    exercise:
-      "💪 Exercise movement camera me clearly dikhao.",
+
+  const instructions = {
 
     water:
       "💧 Bottle ya cup camera me clearly dikhao.",
 
+    running:
+      "🏃 Camera me running/movement clearly dikhao.",
+
+    exercise:
+      "💪 Exercise movement clearly camera me dikhao.",
+
     study:
-      "📚 Person + study setup camera me dikhao.",
+      "📚 Laptop ya book camera me clearly dikhao.",
 
     general:
-      "🙂 Person camera ke saamne clearly raho."
+      "🙂 Camera me khud clearly dikho."
 
   };
 
-  const overlay=
+
+  const overlay =
     document.createElement(
       "div"
     );
 
-  overlay.id=
+
+  overlay.id =
     "verificationOverlay";
 
-  overlay.className=
+
+  overlay.className =
     "overlay";
 
-  overlay.innerHTML=
-    `
+
+  overlay.innerHTML = `
 
     <div class="modal">
 
@@ -1567,60 +3234,61 @@ function createVerifyModal(
         id="verifyVideo"
         autoplay
         muted
-        playsinline>
-      </video>
+        playsinline
+      ></video>
 
       <div class="progress">
+        <div id="verifyProgress"></div>
+      </div>
 
-        <div
-          id="verifyProgress">
-        </div>
-
+      <div
+        id="verifyState"
+        class="verify-state"
+      >
+        Start Verification dabao.
       </div>
 
       <p
         id="verifyStatus"
-        class="sub">
-
-        Start Verification dabao.
-
+        class="sub"
+      >
+        Camera start hone ke baad verification chalegi.
       </p>
 
       <div class="actions">
 
         <button
-          id="startVerify">
-
+          id="startVerify"
+        >
           📷 Start Verification
-
         </button>
 
         <button
-          id="cancelVerify">
-
+          id="cancelVerify"
+        >
           Cancel
-
         </button>
 
       </div>
 
     </div>
+  `;
 
-    `;
 
   document.body.appendChild(
     overlay
   );
 
-  $("#startVerify")
-    .onclick=
-      runVerification;
 
-  $("#cancelVerify")
-    .onclick=
-      closeVerification;
+  $("#startVerify").onclick =
+    runVerification;
+
+
+  $("#cancelVerify").onclick =
+    closeVerification;
 
 }
+
 
 function startVerification(
   key,
@@ -1629,20 +3297,35 @@ function startVerification(
 
   if(
     verificationRunning
-  )
+  ){
+
     return;
 
-  verificationKey=
+  }
+
+
+  verificationKey =
     key;
 
-  verificationTask=
+
+  verificationTask =
     task;
+
 
   createVerifyModal(
     task
   );
 
+
+  /*
+    User click ke through audio unlock.
+    Koi recording nahi hoti.
+  */
+
+  unlockTickVoice();
+
 }
+
 
 function closeVerification(){
 
@@ -1654,10 +3337,11 @@ function closeVerification(){
       verificationTimer
     );
 
-    verificationTimer=
+    verificationTimer =
       null;
 
   }
+
 
   if(
     verificationStream
@@ -1670,517 +3354,224 @@ function closeVerification(){
           t.stop()
       );
 
-    verificationStream=
+
+    verificationStream =
       null;
 
   }
 
-  const overlay=
+
+  const overlay =
     $("#verificationOverlay");
 
-  if(overlay)
+
+  if(overlay){
+
     overlay.remove();
 
-  verificationRunning=
+  }
+
+
+  verificationRunning =
     false;
 
-  verificationKey=
+
+  verificationKey =
     null;
 
-  verificationTask=
+
+  verificationTask =
     null;
 
 }
 
-async function verifyFrame(
-  task,
-  video,
-  previousPoints
-){
-  const predictions =
-    await aiObjectModel.detect(video);
-
-  const type =
-    taskType(task);
-
-  // 💧 WATER VERIFICATION
-  // Water task me person detection mandatory nahi hai.
-  if(type === "water"){
-
-    const found =
-      predictions.some(
-        p =>
-          (
-            p.class === "bottle" ||
-            p.class === "cup"
-          ) &&
-          p.score >= 0.30
-      );
-
-    return {
-      valid: found,
-      points: previousPoints,
-      reason: found
-        ? "✅ Bottle/cup detected."
-        : "💧 Bottle ya cup camera me clearly dikhao."
-    };
-  }
-
-  // 👤 Person detection for other tasks
-  const person =
-    predictions.some(
-      p =>
-        p.class === "person" &&
-        p.score >= 0.45
-    );
-
-  if(!person){
-    return {
-      valid:false,
-      points:previousPoints,
-      reason:"🙂 Camera me person clearly dikhao."
-    };
-  }
-
-  // 🙂 GENERAL
-  if(type === "general"){
-    return {
-      valid:true,
-      points:previousPoints,
-      reason:"✅ Person detected."
-    };
-  }
-
-  // 📚 STUDY
-  if(type === "study"){
-
-    const studyObject =
-      predictions.some(
-        p =>
-          p.class === "laptop" &&
-          p.score >= 0.35
-      );
-
-    return {
-      valid:studyObject,
-      points:previousPoints,
-      reason:studyObject
-        ? "✅ Study setup detected."
-        : "📚 Laptop/study setup camera me dikhao."
-    };
-  }
-
-  // 🏃 RUNNING / 💪 EXERCISE
-  let points = null;
-
-  try{
-    const poses =
-      await aiPoseModel.estimatePoses(video);
-
-    points =
-      (
-        poses[0]?.keypoints ||
-        []
-      )
-      .filter(
-        p =>
-          p.score > 0.30
-      )
-      .reduce(
-        (
-          acc,
-          p
-        ) => {
-          acc[p.name] = {
-            x:p.x,
-            y:p.y
-          };
-
-          return acc;
-        },
-        {}
-      );
-
-  }catch(error){
-    console.log(
-      "Pose",
-      error
-    );
-  }
-
-  let movement = 0;
-
-  if(
-    previousPoints &&
-    points
-  ){
-
-    let total = 0;
-    let count = 0;
-
-    for(
-      const name of Object.keys(points)
-    ){
-
-      if(
-        previousPoints[name]
-      ){
-
-        total +=
-          Math.hypot(
-            points[name].x -
-              previousPoints[name].x,
-            points[name].y -
-              previousPoints[name].y
-          );
-
-        count++;
-      }
-    }
-
-    if(count)
-      movement =
-        total / count;
-  }
-
-  return {
-    valid:
-      movement > 3,
-
-    points,
-
-    reason:
-      movement > 12
-        ? "✅ Movement detected."
-        : `🏃 Movement chahiye (${Math.round(movement)}).`
-  };
-}
-
-  const predictions=
-    await aiObjectModel.detect(
-      video
-    );
-
-  const person=
-    predictions.some(
-      p =>
-        p.class===
-          "person"&&
-        p.score>=
-          .55
-    );
-
-  const type=
-    taskType(
-      task
-    );
-
-  if(
-    !person
-  ){
-
-    return {
-      valid:false,
-      points:previousPoints,
-      reason:"🙂 Camera me person dikhao."
-    };
-
-  }
-
-  if(
-    type===
-    "water"
-  ){
-
-    const found=
-      predictions.some(
-        p =>
-          (
-            p.class===
-              "bottle"||
-            p.class===
-              "cup"
-          )&&
-          p.score>=.5
-      );
-
-    return {
-      valid:
-        found,
-      points:
-        previousPoints,
-      reason:
-        found
-          ? "💧 Bottle/cup detected."
-          : "💧 Bottle ya cup camera me dikhao."
-    };
-
-  }
-
-  if(
-    type===
-    "general"
-  ){
-
-    return {
-      valid:true,
-      points:previousPoints,
-      reason:"✅ Person detected."
-    };
-
-  }
-
-  if(
-    type===
-    "study"
-  ){
-
-    const studyObject=
-      predictions.some(
-        p =>
-          p.class===
-            "laptop"&&
-          p.score>=
-            .45
-      );
-
-    return {
-      valid:
-        studyObject,
-      points:
-        previousPoints,
-      reason:
-        studyObject
-          ? "📚 Study setup detected."
-          : "📚 Laptop/study setup camera me dikhao."
-    };
-
-  }
-
-  let points=
-    null;
-
-  try{
-
-    const poses=
-      await aiPoseModel
-        .estimatePoses(
-          video
-        );
-
-    points=
-      (
-        poses[0]?.keypoints||
-        []
-      )
-        .filter(
-          p =>
-            p.score>
-            .35
-        )
-        .reduce(
-          (
-            acc,
-            p
-          ) => {
-
-            acc[
-              p.name
-            ]={
-              x:p.x,
-              y:p.y
-            };
-
-            return acc;
-
-          },
-          {}
-        );
-
-  }catch(error){
-
-    console.log(
-      "Pose",
-      error
-    );
-
-  }
-
-  let movement=
-    0;
-
-  if(
-    previousPoints&&
-    points
-  ){
-
-    let total=
-      0;
-
-    let count=
-      0;
-
-    for(
-      const name of Object.keys(points)
-    ){
-
-      if(
-        previousPoints[name]
-      ){
-
-        total+=
-          Math.hypot(
-            points[name].x-
-              previousPoints[name].x,
-
-            points[name].y-
-              previousPoints[name].y
-          );
-
-        count++;
-
-      }
-
-    }
-
-    if(count)
-      movement=
-        total/count;
-
-  }
-
-  return {
-    valid:
-      movement>
-      3,
-
-    points,
-
-    reason:
-      movement>
-        12
-        ? "✅ Movement detected."
-        : `🏃 Movement chahiye (${Math.round(movement)}).`
-  };
-
-}
 
 async function runVerification(){
 
   if(
     verificationRunning
-  )
+  ){
+
     return;
 
-  verificationRunning=
-    true;
+  }
 
-  const video=
-    $("#verifyVideo");
-
-  const status=
-    $("#verifyStatus");
-
-  const bar=
-    $("#verifyProgress");
-
-  const start=
-    $("#startVerify");
 
   if(
-    start
-  )
-    start.disabled=
-      true;
+    !verificationTask ||
+    !verificationKey
+  ){
+
+    return;
+
+  }
+
+
+  const video =
+    $("#verifyVideo");
+
+
+  const status =
+    $("#verifyStatus");
+
+
+  const stateBox =
+    $("#verifyState");
+
+
+  const bar =
+    $("#verifyProgress");
+
+
+  const start =
+    $("#startVerify");
+
+
+  verificationRunning =
+    true;
+
+
+  start.disabled =
+    true;
+
+
+  let score =
+    0;
+
+
+  let validStreak =
+    0;
+
+
+  let previousPoints =
+    null;
+
+
+  let busy =
+    false;
+
 
   try{
 
-    status.textContent=
+    status.textContent =
       "🤖 AI models load ho rahe hain...";
+
+
+    stateBox.textContent =
+      "AI loading...";
+
 
     await loadAI();
 
-    status.textContent=
-      "📷 Camera permission do...";
 
-    verificationStream=
+    status.textContent =
+      "📷 Camera permission maang raha hai...";
+
+
+    stateBox.textContent =
+      "Camera opening...";
+
+
+    if(
+      !navigator
+        .mediaDevices
+        ?.getUserMedia
+    ){
+
+      throw new Error(
+        "Is browser me camera access available nahi hai."
+      );
+
+    }
+
+
+    verificationStream =
       await navigator
         .mediaDevices
-        .getUserMedia(
-          {
-            video:{
-              facingMode:"user",
-              width:{
-                ideal:640
-              },
-              height:{
-                ideal:480
-              }
-            },
-            audio:false
-          }
-        );
+        .getUserMedia({
 
-    video.srcObject=
+          video:{
+
+            facingMode:"user",
+
+            width:{
+              ideal:640
+            },
+
+            height:{
+              ideal:480
+            }
+
+          },
+
+          audio:false
+
+        });
+
+
+    video.srcObject =
       verificationStream;
+
 
     await video.play();
 
-    status.textContent=
+
+    status.textContent =
       "🔍 Activity verify ho rahi hai...";
 
-    let score=
-      0;
 
-    let previousPoints=
-      null;
+    stateBox.textContent =
+      "Verification running...";
 
-    let busy=
-      false;
 
-    verificationTimer=
+    verificationTimer =
       setInterval(
+
         async () => {
 
           if(
-            busy||
-            !verificationRunning||
-            !verificationTask||
+            busy ||
+            !verificationRunning ||
+            !verificationTask ||
             !verificationKey
-          )
+          ){
+
             return;
 
-          busy=
+          }
+
+
+          busy =
             true;
+
 
           try{
 
-            const [
-              taskId,
-              date
-            ]=
+            const date =
               verificationKey
-                .split("|");
+                .split("|")[1];
 
-            const state=
+
+            const state =
               verificationStatus(
                 verificationTask,
                 date
               );
 
+
             if(
-              state!==
-              "window"
+              state !== "window"
             ){
 
-              const taskToMiss=
+              const taskToMiss =
                 verificationTask;
+
 
               closeVerification();
 
+
               if(
-                state===
-                "expired"
+                state === "expired"
               ){
 
                 await autoMiss(
@@ -2188,53 +3579,98 @@ async function runVerification(){
                   date
                 );
 
+
                 await loadData();
+
 
                 render();
 
+
+                toast(
+                  "⏰ Verification window miss ho gayi."
+                );
+
               }
+
 
               return;
 
             }
 
-            const result=
+
+            const result =
               await verifyFrame(
+
                 verificationTask,
+
                 video,
+
                 previousPoints
+
               );
 
-            previousPoints=
+
+            previousPoints =
               result.points;
 
-            score=
-              result.valid
-                ? Math.min(
-                    100,
-                    score+10
-                  )
-                : Math.max(
-                    0,
-                    score-2
-                  );
-
-            status.textContent=
-              result.reason;
-
-            bar.style.width=
-              score+
-              "%";
 
             if(
-              score>=
-              100
+              result.valid
             ){
 
-              const key=
+              validStreak++;
+
+
+              score =
+                Math.min(
+                  100,
+                  score + 20
+                );
+
+            }else{
+
+              validStreak =
+                0;
+
+
+              score =
+                Math.max(
+                  0,
+                  score - 3
+                );
+
+            }
+
+
+            status.textContent =
+              result.reason;
+
+
+            stateBox.textContent =
+              result.valid
+                ? `✅ Confirmed ${validStreak}/5`
+                : "⚠️ Stable detection chahiye...";
+
+
+            bar.style.width =
+              `${score}%`;
+
+
+            /*
+              5 valid detections = successful verification.
+              Approximately 5 seconds.
+            */
+
+            if(
+              validStreak >= 5
+            ){
+
+              const key =
                 verificationKey;
 
+
               closeVerification();
+
 
               await completeVerifiedTask(
                 key
@@ -2245,160 +3681,109 @@ async function runVerification(){
           }catch(error){
 
             console.error(
-              "Verification frame",
+              "Verification frame:",
               error
             );
 
+
+            status.textContent =
+              "⚠️ Detection retry ho rahi hai...";
+
           }finally{
 
-            busy=
+            busy =
               false;
 
           }
 
         },
+
         1000
+
       );
 
   }catch(error){
 
     console.error(
-      "Verification",
+      "Verification:",
       error
     );
 
-    status.textContent=
-      "❌ Camera/AI start nahi hua: " +
-      error.message;
 
-    verificationRunning=
+    if(status){
+
+      status.textContent =
+        "❌ Camera/AI start nahi hua: " +
+        error.message;
+
+    }
+
+
+    if(stateBox){
+
+      stateBox.textContent =
+        "Start failed";
+
+    }
+
+
+    verificationRunning =
       false;
 
-    if(start)
-      start.disabled=
+
+    if(start){
+
+      start.disabled =
         false;
 
-  }
+    }
 
-}
-
-async function completeVerifiedTask(
-  key
-){
-
-  if(
-    marks[key]===
-    1
-  )
-    return;
-
-  try{
-
-    await saveMark(
-      key,
-      1
-    );
-
-    playTickVoice();
-
-    render();
-
-    await applyRankUp();
-
-    toast(
-      "✅ Verified! ✓ saved + voice played."
-    );
-
-  }catch(error){
-
-    console.error(
-      error
-    );
-
-    alert(
-      "Completion save nahi hua: " +
-      error.message
-    );
-
-  }
-
-}
-
-async function checkExpiredTasks(){
-
-  if(
-    !user||
-    !tasks.length
-  )
-    return;
-
-  const today=
-    todayKey();
-
-  let changed=
-    false;
-
-  for(
-    const task of tasks
-  ){
-
-    const key=
-      `${task.id}|${today}`;
 
     if(
-      marks[key]
-    )
-      continue;
-
-    if(
-      verificationStatus(
-        task,
-        today
-      )===
-      "expired"
+      verificationStream
     ){
 
-      await autoMiss(
-        task,
-        today
-      );
+      verificationStream
+        .getTracks()
+        .forEach(
+          t =>
+            t.stop()
+        );
 
-      changed=
-        true;
+
+      verificationStream =
+        null;
 
     }
 
   }
 
-  if(changed){
-
-    render();
-
-    await applyRankUp();
-
-  }
-
 }
+
 
 function render(){
 
-  const y=
+  const y =
     view.getFullYear();
 
-  const m=
+
+  const m =
     view.getMonth();
 
-  const days=
+
+  const days =
     new Date(
       y,
       m+1,
       0
     ).getDate();
 
-  monthInput.value=
+
+  monthInput.value =
     `${y}-${pad(m+1)}`;
 
-  monthTitle.textContent=
+
+  monthTitle.textContent =
     view.toLocaleDateString(
       "en-IN",
       {
@@ -2407,8 +3792,14 @@ function render(){
       }
     );
 
-  let html=
-    `<table><thead><tr><th>Task</th><th>Time</th>`;
+
+  let html =
+    `<table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Time</th>`;
+
 
   for(
     let d=1;
@@ -2416,26 +3807,29 @@ function render(){
     d++
   ){
 
-    html+=
+    html +=
       `<th>${d}</th>`;
 
   }
 
-  html+=
-    `<th>Delete</th></tr></thead><tbody>`;
 
-  if(
-    !tasks.length
-  ){
+  html +=
+    `<th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>`;
 
-    html+=
-      `
+
+  if(!tasks.length){
+
+    html += `
 
       <tr>
 
         <td
           colspan="${days+3}"
-          class="empty">
+          class="empty"
+        >
 
           Abhi koi task nahi hai.<br>
 
@@ -2445,38 +3839,29 @@ function render(){
 
       </tr>
 
-      `;
+    `;
 
   }else{
 
     for(
-      const task of tasks
+      const task
+      of tasks
     ){
 
-      html+=
-        `
+      html += `
 
         <tr>
 
           <td class="task-name">
-
-            ${esc(
-              task.name
-            )}
-
+            ${esc(task.name)}
           </td>
 
           <td class="task-time">
-
-            ${esc(
-              displayTime(
-                task.time
-              )
-            )}
-
+            ${esc(displayTime(task.time))}
           </td>
 
-        `;
+      `;
+
 
       for(
         let d=1;
@@ -2484,84 +3869,98 @@ function render(){
         d++
       ){
 
-        const date=
+        const date =
           `${y}-${pad(m+1)}-${pad(d)}`;
 
-        const key=
-          `${task.id}|${date}`;
 
-        const value=
-          marks[key]||
-          0;
+        const key =
+          taskDateKey(
+            task,
+            date
+          );
 
-        const state=
+
+        const value =
+          marks[key] || 0;
+
+
+        const state =
           verificationStatus(
             task,
             date
           );
 
-        let text=
+
+        let text =
           "—";
 
-        let classes=
+
+        let classes =
           "cell";
 
-        if(
-          value===1
-        ){
 
-          text=
+        if(value === 1){
+
+          text =
             "✓";
 
-          classes+=
+          classes +=
             " complete";
 
         }else if(
-          value===2
+          value === 2
         ){
 
-          text=
+          text =
             "X";
 
-          classes+=
+          classes +=
             " missed";
 
         }else if(
-          state===
-          "window"
+          state === "window"
         ){
 
-          classes+=
+          classes +=
             " verify";
 
         }else if(
-          state===
-          "future"
+          state === "future"
         ){
 
-          classes+=
+          classes +=
+            " locked";
+
+        }else if(
+          state === "expired"
+        ){
+
+          classes +=
             " locked";
 
         }
 
+
         if(
-          date===
+          date ===
           todayKey()
         ){
 
-          classes+=
+          classes +=
             " today";
 
         }
 
-        html+=
-          `
+
+        html += `
 
           <td>
 
             <button
               class="${classes}"
-              data-mark="${esc(key)}">
+              data-mark="${esc(key)}"
+              title="${esc(state)}"
+            >
 
               ${text}
 
@@ -2569,44 +3968,48 @@ function render(){
 
           </td>
 
-          `;
+        `;
 
       }
 
-      html+=
-        `
+
+      html += `
 
           <td>
 
             <button
               class="del"
-              data-delete="${esc(task.id)}">
-
+              data-delete="${esc(task.id)}"
+            >
               Delete
-
             </button>
 
           </td>
 
         </tr>
 
-        `;
+      `;
 
     }
 
   }
 
-  html+=
+
+  html +=
     `</tbody></table>`;
 
-  grid.innerHTML=
+
+  grid.innerHTML =
     html;
 
+
   updateStats();
+
 
   attachGridEvents();
 
 }
+
 
 function attachGridEvents(){
 
@@ -2617,21 +4020,25 @@ function attachGridEvents(){
     .forEach(
       btn => {
 
-        btn.onclick=
+        btn.onclick =
           async () => {
 
             if(
               !confirm(
                 "Task delete karna hai?"
               )
-            )
+            ){
+
               return;
+
+            }
+
 
             try{
 
               const {
                 error
-              }=
+              } =
                 await db
                   .from("tasks")
                   .delete()
@@ -2644,17 +4051,23 @@ function attachGridEvents(){
                     user.id
                   );
 
-              if(error)
+
+              if(error){
+
                 throw error;
 
-              tasks=
+              }
+
+
+              tasks =
                 tasks.filter(
                   t =>
-                    String(t.id)!==
+                    String(t.id) !==
                     String(
                       btn.dataset.delete
                     )
                 );
+
 
               render();
 
@@ -2672,6 +4085,7 @@ function attachGridEvents(){
       }
     );
 
+
   document
     .querySelectorAll(
       "[data-mark]"
@@ -2679,77 +4093,79 @@ function attachGridEvents(){
     .forEach(
       btn => {
 
-        btn.onclick=
+        btn.onclick =
           async () => {
 
-            unlockTickVoice();
-
-            const key=
+            const key =
               btn.dataset.mark;
 
-            if(
-              marks[key]===
-              1
-            ){
 
-              playTickVoice();
+            const [
+              taskId,
+              date
+            ] =
+              key.split("|");
+
+
+            const task =
+              tasks.find(
+                t =>
+                  String(t.id) ===
+                  String(taskId)
+              );
+
+
+            if(!task){
 
               return;
 
             }
 
-            const [
-              taskId,
-              date
-            ]=
-              key.split("|");
 
-            const task=
-              tasks.find(
-                t =>
-                  String(t.id)===
-                  String(taskId)
-              );
-
-            if(!task)
-              return;
-
-            const state=
+            const state =
               verificationStatus(
                 task,
                 date
               );
 
-            if(
-              state===
-              "window"
-            ){
 
-              startVerification(
-                key,
-                task
+            const value =
+              marks[key] || 0;
+
+
+            if(value === 1){
+
+              return;
+
+            }
+
+
+            if(value === 2){
+
+              toast(
+                "❌ Ye task miss ho chuka hai."
               );
 
               return;
 
             }
 
+
             if(
-              state===
-              "future"
+              state === "future"
             ){
 
-              alert(
-                "⏰ Verification window task ke time par khulegi."
+              toast(
+                "⏰ Abhi iska time nahi hua."
               );
 
               return;
 
             }
 
+
             if(
-              state===
-              "expired"
+              state === "expired"
             ){
 
               await autoMiss(
@@ -2757,10 +4173,30 @@ function attachGridEvents(){
                 date
               );
 
+
+              await loadData();
+
+
               render();
 
-              alert(
-                "❌ Verification window khatam ho chuki hai."
+
+              toast(
+                "⏰ Verification window expire ho chuki hai."
+              );
+
+
+              return;
+
+            }
+
+
+            if(
+              state === "window"
+            ){
+
+              startVerification(
+                key,
+                task
               );
 
             }
@@ -2772,55 +4208,93 @@ function attachGridEvents(){
 
 }
 
-$("#add").onsubmit=
-  async event => {
 
-    event.preventDefault();
+addForm.onsubmit =
+  async e => {
 
-    if(!user)
+    e.preventDefault();
+
+
+    if(!user){
+
       return;
 
-    const name=
-      taskInput.value
-        .trim();
+    }
 
-    const time=
+
+    const name =
+      taskInput.value.trim();
+
+
+    const time =
       timeInput.value;
 
+
     if(
-      !name||
+      !name ||
       !time
-    )
+    ){
+
+      toast(
+        "Task aur time dono bharo."
+      );
+
       return;
+
+    }
+
+
+    const submit =
+      addForm.querySelector(
+        "button"
+      );
+
+
+    submit.disabled =
+      true;
+
 
     try{
 
       const {
         data,
         error
-      }=
+      } =
         await db
           .from("tasks")
           .insert({
-            user_id:user.id,
+
+            user_id:
+              user.id,
+
             name,
+
             time
+
           })
           .select()
           .single();
 
-      if(error)
+
+      if(error){
+
         throw error;
+
+      }
+
 
       tasks.push(
         data
       );
 
-      taskInput.value=
+
+      taskInput.value =
         "";
 
-      timeInput.value=
+
+      timeInput.value =
         "";
+
 
       render();
 
@@ -2831,55 +4305,61 @@ $("#add").onsubmit=
         error.message
       );
 
+    }finally{
+
+      submit.disabled =
+        false;
+
     }
 
   };
 
-$("#prev").onclick=
+
+$("#prev").onclick =
   () => {
 
     view.setMonth(
-      view.getMonth()-
-      1
+      view.getMonth()-1
     );
 
     render();
 
   };
 
-$("#next").onclick=
+
+$("#next").onclick =
   () => {
 
     view.setMonth(
-      view.getMonth()+
-      1
+      view.getMonth()+1
     );
 
     render();
 
   };
 
-monthInput.onchange=
+
+monthInput.onchange =
   () => {
 
     const [
       y,
       m
-    ]=
+    ] =
       monthInput.value
         .split("-")
         .map(Number);
 
-    if(
-      y&&m
-    ){
 
-      view=
+    if(y && m){
+
+      view =
         new Date(
           y,
           m-1,
           1
         );
+
 
       render();
 
@@ -2887,46 +4367,53 @@ monthInput.onchange=
 
   };
 
+
 async function sendFriendRequest(){
 
-  if(!user)
+  if(!user){
+
     return;
 
-  const email=
+  }
+
+
+  const email =
     friendSearch.value
       .trim()
       .toLowerCase();
 
+
   if(!email){
 
-    friendMessage.textContent=
+    friendMessage.textContent =
       "Friend ka email bharo.";
 
     return;
 
   }
 
+
   if(
-    email===
-    (
-      user.email||
-      ""
+    email ===
+    String(
+      user.email || ""
     ).toLowerCase()
   ){
 
-    friendMessage.textContent=
+    friendMessage.textContent =
       "Khud ko friend request nahi bhej sakte.";
 
     return;
 
   }
 
+
   try{
 
     const {
       data:friend,
       error:findError
-    }=
+    } =
       await db
         .from("profiles")
         .select(
@@ -2938,21 +4425,27 @@ async function sendFriendRequest(){
         )
         .maybeSingle();
 
-    if(findError)
+
+    if(findError){
+
       throw findError;
+
+    }
+
 
     if(!friend){
 
-      friendMessage.textContent=
+      friendMessage.textContent =
         "Is email se koi account nahi mila.";
 
       return;
 
     }
 
+
     const {
       data:existing
-    }=
+    } =
       await db
         .from("friend_requests")
         .select(
@@ -2968,45 +4461,52 @@ async function sendFriendRequest(){
         )
         .maybeSingle();
 
+
     if(
-      existing&&
-      existing.status!=="rejected"
+      existing &&
+      existing.status !==
+      "rejected"
     ){
 
-      friendMessage.textContent=
+      friendMessage.textContent =
         "Friend request already bheji ja chuki hai.";
 
       return;
 
     }
 
+
     if(
-      existing&&
-      existing.status==="rejected"
+      existing &&
+      existing.status ===
+      "rejected"
     ){
 
       const {
         error
-      }=
+      } =
         await db
           .from("friend_requests")
           .update({
-            status:
-              "pending"
+            status:"pending"
           })
           .eq(
             "id",
             existing.id
           );
 
-      if(error)
+
+      if(error){
+
         throw error;
+
+      }
 
     }else{
 
       const {
         data:reverse
-      }=
+      } =
         await db
           .from("friend_requests")
           .select(
@@ -3022,43 +4522,59 @@ async function sendFriendRequest(){
           )
           .maybeSingle();
 
+
       if(
-        reverse?.status===
+        reverse?.status ===
         "pending"
       ){
 
-        friendMessage.textContent=
+        friendMessage.textContent =
           "Is friend ki request already pending hai.";
 
         return;
 
       }
 
+
       const {
         error
-      }=
+      } =
         await db
           .from("friend_requests")
           .insert({
-            sender_id:user.id,
-            receiver_id:friend.id,
-            status:"pending"
+
+            sender_id:
+              user.id,
+
+            receiver_id:
+              friend.id,
+
+            status:
+              "pending"
+
           });
 
-      if(error)
+
+      if(error){
+
         throw error;
+
+      }
 
     }
 
-    friendMessage.textContent=
+
+    friendMessage.textContent =
       "✅ Friend request bhej di gayi.";
 
-    friendSearch.value=
+
+    friendSearch.value =
       "";
+
 
   }catch(error){
 
-    friendMessage.textContent=
+    friendMessage.textContent =
       "Request error: " +
       error.message;
 
@@ -3066,18 +4582,24 @@ async function sendFriendRequest(){
 
 }
 
+
 async function loadFriendRequests(){
 
-  if(!user)
+  if(!user){
+
     return;
 
-  const box=
+  }
+
+
+  const box =
     $("#friendRequests");
+
 
   const {
     data,
     error
-  }=
+  } =
     await db
       .from("friend_requests")
       .select(
@@ -3092,34 +4614,43 @@ async function loadFriendRequests(){
         "pending"
       );
 
+
   if(error){
 
-    box.innerHTML=
-      `<p class="empty">${esc(error.message)}</p>`;
+    box.innerHTML =
+      `<p class="empty">
+        ${esc(error.message)}
+      </p>`;
 
     return;
 
   }
+
 
   if(!data?.length){
 
-    box.innerHTML=
-      `<p class="empty">Koi pending request nahi hai.</p>`;
+    box.innerHTML =
+      `<p class="empty">
+        Koi pending request nahi hai.
+      </p>`;
 
     return;
 
   }
 
-  box.innerHTML=
+
+  box.innerHTML =
     "";
 
+
   for(
-    const req of data
+    const req
+    of data
   ){
 
     const {
       data:sender
-    }=
+    } =
       await db
         .from("profiles")
         .select(
@@ -3131,54 +4662,71 @@ async function loadFriendRequests(){
         )
         .maybeSingle();
 
-    if(!sender)
+
+    if(!sender){
+
       continue;
 
-    const row=
+    }
+
+
+    const row =
       document.createElement(
         "div"
       );
 
-    row.className=
+
+    row.className =
       "request";
 
-    row.innerHTML=
-      `
 
-      <div>
+    const left =
+      document.createElement(
+        "div"
+      );
 
-        <b>
-          ${esc(
-            sender.username||
-            sender.email
-          )}
-        </b>
 
-        <small class="small">
-          ${esc(
-            sender.email||
-            ""
-          )}
-        </small>
+    left.innerHTML = `
 
-      </div>
+      <b>
+        ${esc(
+          sender.username ||
+          sender.email
+        )}
+      </b>
 
-      <button>
-        Accept
-      </button>
+      <small class="small">
+        ${esc(
+          sender.email || ""
+        )}
+      </small>
 
-      `;
+    `;
 
-    row
-      .querySelector(
+
+    const button =
+      document.createElement(
         "button"
-      )
-      .onclick=
-        () =>
-          acceptFriendRequest(
-            req.id,
-            req.sender_id
-          );
+      );
+
+
+    button.textContent =
+      "Accept";
+
+
+    button.onclick =
+      () =>
+        acceptFriendRequest(
+          req.id,
+          req.sender_id
+        );
+
+
+    row.append(
+      left,
+      button
+    );
+
 
     box.appendChild(
       row
@@ -3187,6 +4735,7 @@ async function loadFriendRequests(){
   }
 
 }
+
 
 async function acceptFriendRequest(
   requestId,
@@ -3197,29 +4746,31 @@ async function acceptFriendRequest(
 
     const {
       error:requestError
-    }=
+    } =
       await db
         .from("friend_requests")
         .update({
-          status:
-            "accepted"
+          status:"accepted"
         })
         .eq(
           "id",
           requestId
         );
 
-    if(requestError)
+
+    if(requestError){
+
       throw requestError;
+
+    }
+
 
     const {
       data:mine
-    }=
+    } =
       await db
         .from("friendships")
-        .select(
-          "id"
-        )
+        .select("id")
         .eq(
           "user_id",
           user.id
@@ -3230,53 +4781,61 @@ async function acceptFriendRequest(
         )
         .maybeSingle();
 
+
     if(!mine){
 
       const {
         error
-      }=
+      } =
         await db
           .from("friendships")
           .insert({
-            user_id:user.id,
-            friend_id:senderId
+
+            user_id:
+              user.id,
+
+            friend_id:
+              senderId
+
           });
 
-      if(error)
+
+      if(error){
+
         throw error;
+
+      }
 
     }
 
-    /*
-       Reverse row is optional.
-       If RLS allows it, insert it too.
-       loadFriends() supports both directions.
-    */
 
     try{
 
       await db
         .from("friendships")
         .insert({
-          user_id:senderId,
-          friend_id:user.id
+
+          user_id:
+            senderId,
+
+          friend_id:
+            user.id
+
         });
 
-    }catch(error){
+    }catch(_){}
 
-      console.log(
-        "Reverse friendship row:",
-        error
-      );
-
-    }
 
     await loadFriendRequests();
+
+
     await loadFriends();
+
 
     toast(
       "✅ Friend added."
     );
+
 
   }catch(error){
 
@@ -3289,13 +4848,14 @@ async function acceptFriendRequest(
 
 }
 
+
 async function getFriendStats(
   friendId
 ){
 
   const {
     data:friendTasks
-  }=
+  } =
     await db
       .from("tasks")
       .select("id")
@@ -3304,9 +4864,10 @@ async function getFriendStats(
         friendId
       );
 
+
   const {
     data:friendMarks
-  }=
+  } =
     await db
       .from("marks")
       .select(
@@ -3317,42 +4878,64 @@ async function getFriendStats(
         friendId
       );
 
-  const y=
+
+  const y =
     view.getFullYear();
 
-  const m=
+
+  const m =
     view.getMonth();
 
-  const days=
+
+  const days =
     new Date(
       y,
       m+1,
       0
     ).getDate();
 
-  const ids=
-    (
-      friendTasks||
-      []
-    )
+
+  const ids =
+    (friendTasks || [])
       .map(
         t =>
-          String(
-            t.id
-          )
+          String(t.id)
       );
 
-  let completed=
+
+  const fm =
+    {};
+
+
+  (friendMarks || [])
+    .forEach(
+      mark => {
+
+        fm[
+          `${mark.task_id}|${mark.mark_date}`
+        ] =
+          mark.completed ===
+          true;
+
+      }
+    );
+
+
+  let completed =
     0;
 
-  let missed=
+
+  let missed =
     0;
 
-  let best=
+
+  let best =
     0;
 
-  let current=
+
+  let current =
     0;
+
 
   for(
     let d=1;
@@ -3360,59 +4943,54 @@ async function getFriendStats(
     d++
   ){
 
-    let dayComplete=
-      ids.length>
-      0;
+    let dayComplete =
+      ids.length > 0;
+
 
     for(
-      const id of ids
+      const id
+      of ids
     ){
 
-      const mark=
-        (
-          friendMarks||
-          []
-        )
-          .find(
-            x =>
-              String(
-                x.task_id
-              )===
-              id&&
-              x.mark_date===
-              `${y}-${pad(m+1)}-${pad(d)}`
-          );
+      const key =
+        `${id}|${y}-${pad(m+1)}-${pad(d)}`;
 
-      if(
-        mark?.completed===
-        true
-      ){
+
+      const has =
+        !!fm[key];
+
+
+      if(has){
 
         completed++;
 
-      }else if(
-        mark?.completed===
-        false
+      }else{
+
+        dayComplete =
+          false;
+
+      }
+
+
+      if(
+        !has &&
+        new Date(
+          `${y}-${pad(m+1)}-${pad(d)}T23:59:59`
+        ) < new Date()
       ){
 
         missed++;
-
-      }else{
-
-        dayComplete=
-          false;
 
       }
 
     }
 
-    if(
-      dayComplete
-    ){
+
+    if(dayComplete){
 
       current++;
 
-      best=
+      best =
         Math.max(
           best,
           current
@@ -3420,24 +4998,26 @@ async function getFriendStats(
 
     }else{
 
-      current=
+      current =
         0;
 
     }
 
   }
 
-  const total=
-    completed+
+
+  const total =
+    completed +
     missed;
+
 
   return {
 
     rate:
       total
         ? Math.round(
-            completed/
-            total*
+            completed /
+            total *
             100
           )
         : 0,
@@ -3449,25 +5029,29 @@ async function getFriendStats(
 
 }
 
+
 async function loadFriends(){
 
-  if(!user)
+  if(!user){
+
     return;
 
-  const box=
+  }
+
+
+  const box =
     $("#friendsList");
+
 
   const [
     one,
     two
-  ]=
+  ] =
     await Promise.all([
 
       db
         .from("friendships")
-        .select(
-          "friend_id"
-        )
+        .select("friend_id")
         .eq(
           "user_id",
           user.id
@@ -3475,9 +5059,7 @@ async function loadFriends(){
 
       db
         .from("friendships")
-        .select(
-          "user_id"
-        )
+        .select("user_id")
         .eq(
           "friend_id",
           user.id
@@ -3485,69 +5067,79 @@ async function loadFriends(){
 
     ]);
 
+
   if(
-    one.error||
+    one.error ||
     two.error
   ){
 
-    const error=
-      one.error||
+    const error =
+      one.error ||
       two.error;
 
-    box.innerHTML=
-      `<p class="empty">${esc(error.message)}</p>`;
+
+    box.innerHTML =
+      `<p class="empty">
+        ${esc(error.message)}
+      </p>`;
+
 
     return;
 
   }
 
-  const ids=
+
+  const ids =
     new Set();
 
-  (
-    one.data||
-    []
-  ).forEach(
-    x =>
-      ids.add(
-        x.friend_id
-      )
-  );
 
-  (
-    two.data||
-    []
-  ).forEach(
-    x =>
-      ids.add(
-        x.user_id
-      )
-  );
+  (one.data || [])
+    .forEach(
+      x =>
+        ids.add(
+          x.friend_id
+        )
+    );
 
-  if(
-    !ids.size
-  ){
 
-    box.innerHTML=
-      `<p class="empty">Abhi koi friend nahi hai.</p>`;
+  (two.data || [])
+    .forEach(
+      x =>
+        ids.add(
+          x.user_id
+        )
+    );
+
+
+  if(!ids.size){
+
+    box.innerHTML =
+      `<p class="empty">
+        Abhi koi friend nahi hai.
+      </p>`;
+
 
     return;
 
   }
 
-  box.innerHTML=
+
+  box.innerHTML =
     "";
 
-  const mine=
+
+  const mine =
     monthStats();
 
+
   for(
-    const friendId of ids
+    const friendId
+    of ids
   ){
 
     const {
       data:friend
-    }=
+    } =
       await db
         .from("profiles")
         .select(
@@ -3559,31 +5151,46 @@ async function loadFriends(){
         )
         .maybeSingle();
 
-    if(!friend)
+
+    if(!friend){
+
       continue;
 
-    const s=
+    }
+
+
+    const s =
       await getFriendStats(
         friendId
       );
 
-    const comparison=
-      mine.rate>s.rate
+
+    const comparison =
+      mine.rate > s.rate
         ? "🏆 You are ahead"
-        : mine.rate<s.rate
+        : mine.rate < s.rate
           ? "🔥 Friend is ahead"
           : "🤝 Equal";
 
-    const card=
+
+    const info =
+      rankInfo(
+        friend.rank ||
+        "A"
+      );
+
+
+    const card =
       document.createElement(
         "div"
       );
 
-    card.className=
+
+    card.className =
       "friend-card";
 
-    card.innerHTML=
-      `
+
+    card.innerHTML = `
 
       <div class="friend-top">
 
@@ -3591,90 +5198,63 @@ async function loadFriends(){
 
           <b>
             ${esc(
-              friend.username||
+              friend.username ||
               friend.email
             )}
           </b>
 
           <small class="small">
             ${esc(
-              friend.email||
-              ""
+              friend.email || ""
             )}
           </small>
 
         </div>
 
-        <b>
-          ${esc(
-            friend.rank||
-            "A"
-          )}
-          ${esc(
-            rankLabel(
-              friend.rank||
-              "A"
-            )
-          )}
-        </b>
+        <div>
+          ${info.icon}
+          ${esc(info.name)}
+        </div>
 
       </div>
+
 
       <div class="friend-compare">
 
         <div class="mini">
-          <b>
-            ${mine.rate}%
-          </b>
-          <span>
-            You
-          </span>
+          <b>${s.rate}%</b>
+          <span>Monthly</span>
         </div>
 
         <div class="mini">
-          <b>
-            ${s.rate}%
-          </b>
-          <span>
-            Friend
-          </span>
+          <b>${s.streak}</b>
+          <span>Streak</span>
         </div>
 
         <div class="mini">
-          <b>
-            ${mine.best}
-          </b>
-          <span>
-            Your streak
-          </span>
+          <b>❤️${Number(friend.lives ?? 3)}</b>
+          <span>Lives</span>
         </div>
 
         <div class="mini">
-          <b>
-            ${s.streak}
-          </b>
-          <span>
-            Friend streak
-          </span>
+          <b>${esc(info.name)}</b>
+          <span>Rank</span>
         </div>
 
       </div>
+
 
       <div
         class="sub"
-        style="margin-top:9px">
+        style="margin-top:9px"
+      >
 
         ${comparison}
 
-        • Friend ❤️
-        ${Number(
-          friend.lives??
-          3
-        )}
-
       </div>
 
-      `;
+    `;
+
 
     box.appendChild(
       card
@@ -3684,113 +5264,198 @@ async function loadFriends(){
 
 }
 
-friendsBtn.onclick=
+
+friendsBtn.onclick =
   async () => {
 
     friendsPanel
       .classList
-      .remove(
-        "hidden"
+      .remove("hidden");
+
+
+    try{
+
+      await loadFriendRequests();
+
+      await loadFriends();
+
+    }catch(error){
+
+      console.warn(
+        "Friends:",
+        error
       );
 
-    await loadFriendRequests();
-
-    await loadFriends();
+    }
 
   };
 
-closeFriends.onclick=
-  () =>
-    friendsPanel
-      .classList
-      .add(
-        "hidden"
-      );
 
-sendFriendRequestBtn.onclick=
-  sendFriendRequest;
-
-let signupMode=
-  false;
-
-switchAuth.onclick=
+closeFriends.onclick =
   () => {
 
-    signupMode=
+    friendsPanel
+      .classList
+      .add("hidden");
+
+  };
+
+
+sendFriendRequestBtn.onclick =
+  sendFriendRequest;
+
+
+friendSearch.addEventListener(
+  "keydown",
+  e => {
+
+    if(
+      e.key ===
+      "Enter"
+    ){
+
+      e.preventDefault();
+
+      sendFriendRequest();
+
+    }
+
+  }
+);
+
+
+switchAuth.onclick =
+  () => {
+
+    signupMode =
       !signupMode;
 
-    loginText.textContent=
+
+    clearLoginError();
+
+
+    loginText.textContent =
       signupMode
         ? "Naya account create karo."
         : "Login karke apna tracker open karo.";
 
-    authBtn.textContent=
+
+    authBtn.textContent =
       signupMode
         ? "Signup"
         : "Login";
 
-    switchAuth.textContent=
+
+    switchAuth.textContent =
       signupMode
         ? "Already account hai? Login"
         : "Account nahi hai? Signup";
 
-    passwordInput.autocomplete=
+
+    passwordInput.autocomplete =
       signupMode
         ? "new-password"
         : "current-password";
 
   };
 
+
 async function startApp(
   currentUser
 ){
 
+  if(!currentUser){
+
+    throw new Error(
+      "User session nahi mila."
+    );
+
+  }
+
+
   if(
-    startupRunning&&
-    user?.id===
-    currentUser?.id
-  )
+    startupRunning &&
+    user?.id ===
+      currentUser.id
+  ){
+
     return;
 
-  startupRunning=
+  }
+
+
+  startupRunning =
     true;
 
-  user=
+
+  user =
     currentUser;
 
-  userEmail.textContent=
-    user.email||
+
+  userEmail.textContent =
+    user.email ||
     "";
+
 
   loginScreen
     .classList
-    .add(
-      "hidden"
-    );
+    .add("hidden");
+
 
   app
     .classList
-    .remove(
-      "hidden"
-    );
+    .remove("hidden");
+
 
   try{
 
-    await requestNotificationPermission();
+    /*
+      Notification permission
+      timetable ko block nahi karegi.
+    */
+
+    requestNotificationPermission();
+
 
     await ensureProfile();
 
+
     await loadData();
+
 
     render();
 
+
     await checkExpiredTasks();
+
+
+    render();
+
 
     await applyRankUp();
 
-    await loadFriendRequests();
 
-    await loadFriends();
+    /*
+      Friends optional hain.
+      Friends table/RLS error ki wajah se
+      main timetable fail nahi hogi.
+    */
+
+    try{
+
+      await loadFriendRequests();
+
+      await loadFriends();
+
+    }catch(error){
+
+      console.warn(
+        "Friends load:",
+        error
+      );
+
+    }
+
 
     checkAlarmWindows();
 
@@ -3800,36 +5465,53 @@ async function startApp(
       error
     );
 
-    alert(
+
+    loginScreen
+      .classList
+      .remove("hidden");
+
+
+    app
+      .classList
+      .add("hidden");
+
+
+    showLoginError(
       "Data load nahi hua: " +
       error.message
     );
 
   }finally{
 
-    startupRunning=
+    startupRunning =
       false;
 
   }
 
 }
 
-authBtn.onclick=
+
+authBtn.onclick =
   async () => {
 
-    const email=
+    const email =
       emailInput.value
         .trim();
 
-    const password=
+
+    const password =
       passwordInput.value;
 
+
+    clearLoginError();
+
+
     if(
-      !email||
+      !email ||
       !password
     ){
 
-      alert(
+      showLoginError(
         "Email aur password dono bharo."
       );
 
@@ -3837,30 +5519,43 @@ authBtn.onclick=
 
     }
 
-    authBtn.disabled=
+
+    authBtn.disabled =
       true;
+
 
     try{
 
-      await requestNotificationPermission();
+      /*
+        IMPORTANT:
+        Notification permission login
+        ko block nahi karegi.
+      */
 
-      if(
-        signupMode
-      ){
+      requestNotificationPermission();
+
+
+      if(signupMode){
 
         const {
           data,
           error
-        }=
-          await db
-            .auth
-            .signUp({
-              email,
-              password
-            });
+        } =
+          await db.auth.signUp({
 
-        if(error)
+            email,
+
+            password
+
+          });
+
+
+        if(error){
+
           throw error;
+
+        }
+
 
         if(
           data.session
@@ -3876,8 +5571,10 @@ authBtn.onclick=
             "Signup successful. Email verify karke login karo."
           );
 
-          signupMode=
+
+          signupMode =
             false;
+
 
           switchAuth.click();
 
@@ -3888,16 +5585,23 @@ authBtn.onclick=
         const {
           data,
           error
-        }=
-          await db
-            .auth
+        } =
+          await db.auth
             .signInWithPassword({
+
               email,
+
               password
+
             });
 
-        if(error)
+
+        if(error){
+
           throw error;
+
+        }
+
 
         await startApp(
           data.user
@@ -3907,27 +5611,61 @@ authBtn.onclick=
 
     }catch(error){
 
-      alert(
-        error.message
+      console.error(
+        "Auth:",
+        error
+      );
+
+
+      showLoginError(
+        error.message ||
+        "Login failed."
       );
 
     }finally{
 
-      authBtn.disabled=
+      authBtn.disabled =
         false;
 
     }
 
   };
 
-logoutBtn.onclick=
+
+passwordInput.addEventListener(
+  "keydown",
+  e => {
+
+    if(
+      e.key ===
+      "Enter"
+    ){
+
+      authBtn.click();
+
+    }
+
+  }
+);
+
+
+logoutBtn.onclick =
   async () => {
 
     try{
 
-      await db
-        .auth
+      closeVerification();
+
+
+      await db.auth
         .signOut();
+
+    }catch(error){
+
+      console.error(
+        "Logout:",
+        error
+      );
 
     }finally{
 
@@ -3937,123 +5675,214 @@ logoutBtn.onclick=
 
   };
 
+
+function checkAlarmWindows(){
+
+  if(
+    !user ||
+    !tasks.length
+  ){
+
+    return;
+
+  }
+
+
+  for(
+    const task
+    of tasks
+  ){
+
+    const date =
+      todayKey();
+
+
+    const key =
+      taskDateKey(
+        task,
+        date
+      );
+
+
+    const state =
+      verificationStatus(
+        task,
+        date
+      );
+
+
+    if(
+      state ===
+      "window" &&
+      !alarmTimers.has(key)
+    ){
+
+      const mins =
+        parseTaskTime(
+          task.time
+        );
+
+
+      if(mins === null){
+
+        continue;
+
+      }
+
+
+      const target =
+        new Date(
+          `${date}T00:00:00`
+        );
+
+
+      target.setHours(
+        Math.floor(mins/60),
+        mins%60,
+        0,
+        0
+      );
+
+
+      const delay =
+        Math.max(
+          0,
+          target.getTime() -
+          Date.now()
+        );
+
+
+      const timer =
+        setTimeout(
+          () => {
+
+            if(
+              !marks[key]
+            ){
+
+              sendTaskNotification(
+                task
+              );
+
+            }
+
+          },
+          delay
+        );
+
+
+      alarmTimers.set(
+        key,
+        timer
+      );
+
+    }
+
+  }
+
+}
+
+
 setInterval(
   async () => {
 
-    if(!user)
+    if(!user){
+
       return;
+
+    }
+
 
     try{
 
       await checkExpiredTasks();
 
+
       await applyRankUp();
+
 
       checkAlarmWindows();
 
-      updateStats();
-
     }catch(error){
 
-      console.error(
-        "Background",
+      console.warn(
+        "Background check:",
         error
       );
 
     }
 
   },
-  10000
+  60000
 );
 
-document.addEventListener(
-  "visibilitychange",
-  async () => {
 
-    if(
-      !document.hidden&&
-      user
-    ){
+db.auth
+  .getSession()
+  .then(
+    async ({
+      data,
+      error
+    }) => {
 
-      try{
-
-        await loadData();
-
-        render();
-
-        await checkExpiredTasks();
-
-        await applyRankUp();
-
-        await loadFriendRequests();
-
-        await loadFriends();
-
-      }catch(error){
+      if(error){
 
         console.error(
-          "Resume",
+          "Session:",
           error
+        );
+
+        return;
+
+      }
+
+
+      if(
+        data?.session?.user
+      ){
+
+        await startApp(
+          data.session.user
         );
 
       }
 
     }
+  )
+  .catch(
+    error =>
+      console.error(
+        "Startup session:",
+        error
+      )
+  );
 
-  }
-);
 
-(async()=>{
+db.auth
+  .onAuthStateChange(
+    async (
+      _event,
+      session
+    ) => {
 
-  try{
+      if(
+        session?.user &&
+        !user
+      ){
 
-    const {
-      data:{
-        session
+        await startApp(
+          session.user
+        );
+
       }
-    }=
-      await db
-        .auth
-        .getSession();
-
-    if(session){
-
-      await startApp(
-        session.user
-      );
 
     }
+  );
 
-  }catch(error){
 
-    console.error(
-      error
-    );
-
-  }
-
-})();
-
-db.auth.onAuthStateChange(
-  async (
-    event,
-    session
-  ) => {
-
-    if(
-      session&&
-      !user
-    ){
-
-      await startApp(
-        session.user
-      );
-
-    }
-
-  }
-);
+render();
 
 </script>
+
 </body>
 </html>
