@@ -6,6 +6,9 @@
 <title>My Timetable Tracker</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 
 <style>
 :root{
@@ -19,10 +22,12 @@
   --accent2:#818cf8;
   --good:#22c55e;
   --bad:#ef4444;
-  --pending:#64748b;
+  --warn:#facc15;
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -35,7 +40,10 @@ body{
     var(--bg);
 }
 
-button,input{font:inherit}
+button,
+input{
+  font:inherit;
+}
 
 button{
   cursor:pointer;
@@ -52,6 +60,11 @@ button:hover{
   background:var(--card2);
 }
 
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
 input{
   width:100%;
   color:var(--text);
@@ -62,7 +75,9 @@ input{
   outline:none;
 }
 
-input::placeholder{color:#64748b}
+input::placeholder{
+  color:#64748b;
+}
 
 input:focus{
   border-color:var(--accent2);
@@ -80,7 +95,7 @@ input:focus{
   justify-content:space-between;
   align-items:center;
   gap:20px;
-  margin-bottom:25px;
+  margin-bottom:18px;
 }
 
 h1{
@@ -89,10 +104,26 @@ h1{
   font-weight:800;
 }
 
+h2{
+  margin:0 0 5px;
+}
+
+h3{
+  margin:18px 0 10px;
+}
+
 .sub{
   color:var(--muted);
   font-size:13px;
   margin-top:6px;
+}
+
+.user-area{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--muted);
+  font-size:13px;
 }
 
 .controls{
@@ -101,15 +132,24 @@ h1{
   align-items:center;
 }
 
+.panel{
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(17,26,45,.9);
+  box-shadow:0 18px 45px rgba(0,0,0,.22);
+  margin-bottom:18px;
+}
+
 .stats{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
   margin-bottom:18px;
 }
 
 .stat{
-  padding:20px;
+  padding:17px;
   border:1px solid var(--line);
   border-radius:16px;
   background:linear-gradient(145deg,var(--card),#0d1527);
@@ -118,21 +158,39 @@ h1{
 
 .stat b{
   display:block;
-  font-size:28px;
+  font-size:24px;
   margin-bottom:4px;
 }
 
 .stat span{
   color:var(--muted);
-  font-size:13px;
+  font-size:12px;
 }
 
-.panel{
-  padding:20px;
+.rank-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
   border:1px solid var(--line);
-  border-radius:18px;
-  background:rgba(17,26,45,.9);
-  box-shadow:0 18px 45px rgba(0,0,0,.22);
+  border-radius:16px;
+  background:linear-gradient(145deg,var(--card),#0d1527);
+  margin-bottom:18px;
+}
+
+.rank-big{
+  font-size:34px;
+  font-weight:900;
+}
+
+.rank-info b{
+  display:block;
+  font-size:17px;
+}
+
+.rank-info span{
+  color:var(--muted);
+  font-size:12px;
 }
 
 .bar{
@@ -143,7 +201,9 @@ h1{
   margin-bottom:18px;
 }
 
-.bar strong{font-size:18px}
+.bar strong{
+  font-size:18px;
+}
 
 #add{
   display:flex;
@@ -151,7 +211,13 @@ h1{
   align-items:center;
 }
 
-#add input{width:190px}
+#add input[type="text"]{
+  width:190px;
+}
+
+#add input[type="time"]{
+  width:145px;
+}
 
 #add button{
   background:linear-gradient(135deg,var(--accent),#4f46e5);
@@ -189,7 +255,10 @@ td{
   border-bottom:1px solid #1d2942;
 }
 
-td:last-child,th:last-child{border-right:0}
+td:last-child,
+th:last-child{
+  border-right:0;
+}
 
 .task-name{
   min-width:150px;
@@ -211,7 +280,7 @@ td:last-child,th:last-child{border-right:0}
   border:1px solid transparent;
   border-radius:10px;
   background:transparent;
-  color:var(--pending);
+  color:#64748b;
   font-weight:800;
   font-size:17px;
 }
@@ -233,6 +302,17 @@ td:last-child,th:last-child{border-right:0}
   border-color:rgba(239,68,68,.25);
 }
 
+.cell.verify{
+  color:#facc15;
+  background:rgba(250,204,21,.1);
+  border-color:rgba(250,204,21,.25);
+}
+
+.cell.locked{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
 .cell.today{
   box-shadow:inset 0 0 0 2px var(--accent);
 }
@@ -246,7 +326,7 @@ td:last-child,th:last-child{border-right:0}
 
 .empty{
   color:var(--muted);
-  padding:35px 15px;
+  padding:30px 15px;
   text-align:center;
 }
 
@@ -297,35 +377,170 @@ td:last-child,th:last-child{border-right:0}
   cursor:pointer;
 }
 
-.switch:hover{color:var(--accent2)}
+.hidden{
+  display:none!important;
+}
 
-.user-area{
+.friends-head{
   display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+}
+
+.friend-search{
+  display:flex;
+  gap:9px;
+  margin:15px 0;
+}
+
+.friend-card{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin:10px 0;
+  background:#0d1527;
+}
+
+.friend-top{
+  display:flex;
+  justify-content:space-between;
   align-items:center;
   gap:10px;
+}
+
+.friend-compare{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:12px;
+}
+
+.mini{
+  padding:9px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  text-align:center;
+}
+
+.mini b{
+  display:block;
+  font-size:16px;
+}
+
+.mini span{
+  font-size:11px;
   color:var(--muted);
-  font-size:13px;
 }
 
-#logout{
-  padding:8px 12px;
+.request{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  padding:10px;
+  border-radius:10px;
+  margin:7px 0;
 }
 
-.hidden{display:none!important}
+.time-note{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:3px;
+}
 
-@media(max-width:800px){
-  .top{
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.82);
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+.modal{
+  width:min(650px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  background:#101827;
+  border:1px solid #34415d;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 25px 80px rgba(0,0,0,.6);
+  text-align:center;
+}
+
+.modal video{
+  width:100%;
+  max-height:380px;
+  object-fit:cover;
+  border-radius:14px;
+  background:#050914;
+  border:1px solid #394660;
+}
+
+.progress{
+  height:13px;
+  background:#273248;
+  border-radius:20px;
+  overflow:hidden;
+  margin:14px 0;
+}
+
+.progress>div{
+  height:100%;
+  width:0%;
+  background:#39d98a;
+  transition:.25s;
+}
+
+#celebrate{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:80px;
+}
+
+.confetti{
+  position:absolute;
+  animation:fall 1.8s ease-out forwards;
+}
+
+@keyframes fall{
+  0%{
+    transform:translateY(-20vh) rotate(0);
+    opacity:1;
+  }
+  100%{
+    transform:translateY(100vh) rotate(720deg);
+    opacity:0;
+  }
+}
+
+@media(max-width:1000px){
+  .stats{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(max-width:700px){
+  .top,
+  .bar,
+  .friends-head{
     flex-direction:column;
-    align-items:flex-start;
+    align-items:stretch;
   }
 
   .stats{
     grid-template-columns:repeat(2,1fr);
-  }
-
-  .bar{
-    flex-direction:column;
-    align-items:stretch;
   }
 
   #add{
@@ -334,46 +549,13 @@ td:last-child,th:last-child{border-right:0}
 
   #add input{
     flex:1;
+    width:auto!important;
     min-width:130px;
   }
-}
 
-@media(max-width:480px){
-  .wrap{padding-top:20px}
-
-  h1{font-size:24px}
-
-  .stats{
-    gap:9px;
+  .friend-compare{
+    grid-template-columns:repeat(2,1fr);
   }
-
-  .stat{
-    padding:14px;
-  }
-
-  .stat b{font-size:22px}
-
-  .panel{padding:12px}
-
-  .user-area{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-}.cell.locked{
-  opacity:.45;
-  cursor:not-allowed;
-}
-
-.cell.verify{
-  color:#facc15;
-  background:rgba(250,204,21,.10);
-  border-color:rgba(250,204,21,.25);
-}
-
-.cell.auto-missed{
-  color:#f87171;
-  background:rgba(239,68,68,.10);
-  border-color:rgba(239,68,68,.25);
 }
 </style>
 </head>
@@ -381,2568 +563,336 @@ td:last-child,th:last-child{border-right:0}
 <body>
 
 <div id="loginScreen" class="login-screen">
+
   <div class="login-card">
 
     <h1>📅 My Timetable Tracker</h1>
-    <p id="loginText">Login karke apna tracker open karo.</p>
 
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+    <p id="loginText">
+      Login karke apna tracker open karo.
+    </p>
 
-    <button id="authBtn">Login</button>
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button id="authBtn">
+      Login
+    </button>
 
     <div id="switchAuth" class="switch">
       Account nahi hai? Signup
     </div>
 
   </div>
+
 </div>
+
 
 <div id="app" class="hidden">
 
-<div class="wrap">
+  <div class="wrap">
 
-  <div class="top">
+    <div class="top">
 
-    <div>
-      <h1>📅 My Timetable Tracker</h1>
-      <div class="sub">
-        ✓ = complete &nbsp; X = missed &nbsp; — = not marked
+      <div>
+
+        <h1>📅 My Timetable Tracker</h1>
+
+        <div class="sub">
+          ✓ = complete &nbsp;
+          X = missed &nbsp;
+          — = not marked
+        </div>
+
       </div>
+
+      <div class="user-area">
+
+        <span id="userEmail"></span>
+
+        <button id="friendsBtn">
+          👥 Friends
+        </button>
+
+        <button id="logout">
+          Logout
+        </button>
+
+      </div>
+
     </div>
 
-    <div class="user-area">
-      <span id="userEmail"></span>
-      <button id="friendsBtn">👥 Friends</button>
-      <button id="logout">Logout</button>
+
+    <!-- RANK -->
+
+    <div id="rankCard" class="rank-card">
+
+      <div id="rankBig" class="rank-big">
+        A
+      </div>
+
+      <div class="rank-info">
+
+        <b id="rankName">
+          😎 Chutiya
+        </b>
+
+        <span id="rankMeta">
+          3 ❤️ lives
+        </span>
+
+      </div>
+
     </div>
 
-  </div>
-<!-- FRIENDS DASHBOARD -->
 
-<div id="friendsPanel" class="panel hidden">
+    <!-- FRIENDS -->
 
-  <div class="friends-head">
-    <div>
-      <h2>👥 Friends</h2>
-      <p class="sub">Friends ke saath apni progress compare karo.</p>
+    <div id="friendsPanel" class="panel hidden">
+
+      <div class="friends-head">
+
+        <div>
+
+          <h2>
+            👥 Friends
+          </h2>
+
+          <p class="sub">
+            Apni aur friends ki progress compare karo.
+          </p>
+
+        </div>
+
+        <button id="closeFriends">
+          ✕ Close
+        </button>
+
+      </div>
+
+
+      <div class="friend-search">
+
+        <input
+          id="friendSearch"
+          type="email"
+          placeholder="Friend ka email"
+        >
+
+        <button id="sendFriendRequest">
+          ➕ Send Request
+        </button>
+
+      </div>
+
+      <div id="friendMessage" class="sub"></div>
+
+
+      <h3>
+        📨 Friend Requests
+      </h3>
+
+      <div id="friendRequests">
+
+        <p class="empty">
+          Koi pending request nahi hai.
+        </p>
+
+      </div>
+
+
+      <h3>
+        🏆 My Friends
+      </h3>
+
+      <div id="friendsList">
+
+        <p class="empty">
+          Abhi koi friend nahi hai.
+        </p>
+
+      </div>
+
     </div>
 
-    <button id="closeFriends">✕ Close</button>
-  </div>
 
-  <div class="friends-search">
+    <!-- MONTH -->
 
-    <input
-      id="friendSearch"
-      type="email"
-      placeholder="Friend ka email"
+    <div
+      class="controls"
+      style="justify-content:center;margin-bottom:18px"
     >
 
-    <button id="sendFriendRequest">
-      ➕ Send Request
-    </button>
+      <button id="prev">
+        ‹
+      </button>
 
-  </div>
+      <input
+        id="month"
+        type="month"
+      >
 
-  <div id="friendMessage" class="sub"></div>
+      <button id="next">
+        ›
+      </button>
 
-  <div class="friends-section">
-
-    <h3>📨 Friend Requests</h3>
-
-    <div id="friendRequests">
-      <p class="empty">Koi pending request nahi hai.</p>
     </div>
 
-  </div>
 
-  <div class="friends-section">
+    <!-- STATS -->
 
-    <h3>🏆 My Friends</h3>
+    <div class="stats">
 
-    <div id="friendsList">
-      <p class="empty">Abhi koi friend nahi hai.</p>
+      <div class="stat">
+        <b id="rate">0%</b>
+        <span>Monthly completion</span>
+      </div>
+
+      <div class="stat">
+        <b id="done">0</b>
+        <span>Completed</span>
+      </div>
+
+      <div class="stat">
+        <b id="miss">0</b>
+        <span>Missed</span>
+      </div>
+
+      <div class="stat">
+        <b id="streak">0</b>
+        <span>Best streak</span>
+      </div>
+
+      <div class="stat">
+        <b id="xp">0</b>
+        <span>XP</span>
+      </div>
+
+      <div class="stat">
+        <b id="lives">❤️❤️❤️</b>
+        <span>Lives</span>
+      </div>
+
+    </div>
+
+
+    <!-- TIMETABLE -->
+
+    <div class="panel">
+
+      <div class="bar">
+
+        <strong id="monthTitle">
+          August 2026
+        </strong>
+
+        <form id="add">
+
+          <input
+            id="task"
+            type="text"
+            placeholder="Task / subject"
+            required
+          >
+
+          <input
+            id="time"
+            type="time"
+            required
+          >
+
+          <button type="submit">
+            + Add task
+          </button>
+
+        </form>
+
+      </div>
+
+      <div
+        id="grid"
+        class="table-wrap"
+      ></div>
+
     </div>
 
   </div>
 
 </div>
-  <div class="controls" style="justify-content:center;margin-bottom:18px">
-    <button id="prev">‹</button>
-    <input id="month" type="month">
-    <button id="next">›</button>
-  </div>
 
-  <div class="stats">
 
-    <div class="stat">
-      <b id="rate">0%</b>
-      <span>Monthly completion</span>
-    </div>
+<div id="celebrate"></div>
 
-    <div class="stat">
-      <b id="done">0</b>
-      <span>Completed</span>
-    </div>
-
-    <div class="stat">
-      <b id="miss">0</b>
-      <span>Missed</span>
-    </div>
-
-    <div class="stat">
-      <b id="streak">0</b>
-      <span>Best streak</span>
-    </div>
-
-  </div>
-
-  <div class="panel">
-
-    <div class="bar">
-
-      <strong id="monthTitle">August 2026</strong>
-
-      <form id="add">
-
-        <input
-          id="task"
-          placeholder="Task / subject"
-          required
-        >
-
-        <input
-          id="time"
-          placeholder="Time (e.g. 7:00 AM)"
-          required
-        >
-
-        <button type="submit">+ Add task</button>
-
-      </form>
-
-    </div>
-
-    <div id="grid" class="table-wrap"></div>
-
-  </div>
-
-</div>
-</div>
 
 <script>
 
 /* =========================================================
-   SUPABASE CONFIG
+   SUPABASE
    ========================================================= */
 
-const SUPABASE_URL = "https://acsokyrhfequnuvtmomx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
+const SUPABASE_URL =
+  "https://acsokyrhfequnuvtmomx.supabase.co";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const SUPABASE_KEY =
+  "sb_publishable_q5tlkRgV8Yv377vmWr8sHw_ZGKfWMPi";
+
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
 /* =========================================================
-   APP STATE
+   STATE
    ========================================================= */
 
 let user = null;
+
+let profile = null;
+
 let tasks = [];
+
 let marks = {};
 
 let view = new Date();
+
 view.setDate(1);
 
-const pad = n => String(n).padStart(2,"0");
-
-const dateKey = d =>
-  `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-
 
 /* =========================================================
-   ELEMENTS
+   HELPERS
    ========================================================= */
 
-const loginScreen = document.querySelector("#loginScreen");
-const app = document.querySelector("#app");
+const pad =
+  n => String(n).padStart(2,"0");
 
-const emailInput = document.querySelector("#email");
-const passwordInput = document.querySelector("#password");
 
-const authBtn = document.querySelector("#authBtn");
-const switchAuth = document.querySelector("#switchAuth");
-const loginText = document.querySelector("#loginText");
-
-const userEmail = document.querySelector("#userEmail");
-const logoutBtn = document.querySelector("#logout");
-const friendsBtn = document.querySelector("#friendsBtn");  
-  const friendsPanel = document.querySelector("#friendsPanel");
-const closeFriends = document.querySelector("#closeFriends");
-const friendSearch = document.querySelector("#friendSearch");
-const sendFriendRequest = document.querySelector("#sendFriendRequest");
-const friendMessage = document.querySelector("#friendMessage");
-  sendFriendRequest.onclick = async () => {
-  const email = friendSearch.value.trim().toLowerCase();
-
-  if(!email){
-    friendMessage.textContent = "Friend ka email bharo.";
-    return;
-  }
-
-  if(!user){
-    friendMessage.textContent = "Pehle login karo.";
-    return;
-  }if(email === (user.email || "").toLowerCase()){
-  friendMessage.textContent = "Khud ko friend request nahi bhej sakte.";
-  return;
-  }try {
-  const { data: friend, error: findError } =
-    await db
-      .from("profiles")
-      .select("id, username, email")
-      .eq("email", email)
-      .maybeSingle();
-
-  if(findError) throw findError;
-
-  if(!friend){
-    friendMessage.textContent =
-      "Is email se koi account nahi mila.";
-    return;} 
-    const { data: existingRequest, error: requestError } =
-    await db
-      .from("friend_requests")
-      .select("id, status")
-      .eq("sender_id", user.id)
-      .eq("receiver_id", friend.id)
-      .maybeSingle();
-
-  if(requestError) throw requestError;
-
-  if(existingRequest){
-    friendMessage.textContent =
-      "Friend request already bheji ja chuki hai.";
-    return;
-  }     const { error: insertError } =
-      await db
-        .from("friend_requests")
-        .insert({
-          sender_id: user.id,
-          receiver_id: friend.id,
-          status: "pending"
-        });
-
-    if(insertError) throw insertError;
-
-    friendMessage.textContent = "Friend request bhej di gayi.";
-        }catch(error){
-      console.error(error);
-      friendMessage.textContent = "Friend request bhejne me error aaya.";
-        }
-      };
-friendsBtn.onclick = () => {
-  friendsPanel.classList.remove("hidden");
-  loadFriendRequests();
-};
-async function loadFriendRequests() {
-
-  if(!user) return;
-
-  const { data, error } = await db
-    .from("friend_requests")
-    .select("id, sender_id, status")
-    .eq("receiver_id", user.id)
-    .eq("status", "pending");
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  const requestsBox = document.querySelector("#friendRequests");
-
-  if(!requestsBox) return;
-
-  if(!data || data.length === 0){
-    requestsBox.innerHTML = "Koi pending request nahi hai.";
-    return;
-  }
-
-  requestsBox.innerHTML = "";
-
-  for(const request of data){
-
-    const { data: sender } = await db
-      .from("profiles")
-      .select("username, email")
-      .eq("id", request.sender_id)
-      .maybeSingle();
-
-    if(!sender) continue;
-
-    const div = document.createElement("div");
-
-    div.innerHTML = `
-      <div>
-        <b>${sender.username || sender.email}</b>
-        <button onclick="acceptFriendRequest('${request.id}', '${request.sender_id}')">
-          Accept
-        </button>
-      </div>
-    `;
-
-    requestsBox.appendChild(div);
-  }
-}
-  async function acceptFriendRequest(requestId, senderId){
-
-  if(!user) return;
-
-  const { error: requestError } = await db
-    .from("friend_requests")
-    .update({ status: "accepted" })
-    .eq("id", requestId);
-
-  if(requestError){
-    console.error(requestError);
-    return;
-  }
-
-  const { error: friendError } = await db
-  .from("friendships")
-  .insert([
-    {
-      user_id: user.id,
-      friend_id: senderId
-    },
-    {
-      user_id: senderId,
-      friend_id: user.id
-    }
-  ]);
-
-  if(friendError){
-    console.error(friendError);
-    return;
-  }
-
- loadFriendRequests();
-loadFriends();
-
-}
-
-async function loadFriends(){
-
-  if(!user) return;
-
-  const friendsList = document.querySelector("#friendsList");
-
-  if(!friendsList) return;
-
-  const { data, error } = await db
-    .from("friendships")
-    .select("friend_id")
-    .eq("user_id", user.id);
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  if(!data || data.length === 0){
-    friendsList.innerHTML =
-      '<p class="empty">Abhi koi friend nahi hai.</p>';
-    return;
-  }
-
-  friendsList.innerHTML = "";
-
-  for(const friendship of data){
-
-    const { data: friend, error: friendError } = await db
-      .from("profiles")
-      .select("username, email")
-      .eq("id", friendship.friend_id)
-      .maybeSingle();
-
-    if(friendError || !friend) continue;
-
-    const div = document.createElement("div");
-
-    div.innerHTML = `
-      <div>
-        <b>${friend.username || friend.email}</b>
-        <span>${friend.email}</span>
-      </div>
-    `;
-
-    friendsList.appendChild(div);
-  }
-  } 
-loadFriends();
-closeFriends.onclick = () => {
-  friendsPanel.classList.add("hidden");
-};
-
-const monthInput = document.querySelector("#month");
-const monthTitle = document.querySelector("#monthTitle");
-
-const taskInput = document.querySelector("#task");
-const timeInput = document.querySelector("#time");
-
-const grid = document.querySelector("#grid");
-
-let signupMode = false;
-
-
-/* =========================================================
-   LOGIN / SIGNUP
-   ========================================================= */
-
-switchAuth.onclick = () => {
-
-  signupMode = !signupMode;
-
-  if(signupMode){
-
-    loginText.textContent =
-      "Naya account create karo.";
-
-    authBtn.textContent = "Signup";
-
-    switchAuth.textContent =
-      "Already account hai? Login";
-
-  }else{
-
-    loginText.textContent =
-      "Login karke apna tracker open karo.";
-
-    authBtn.textContent = "Login";
-
-    switchAuth.textContent =
-      "Account nahi hai? Signup";
-  }
-
-};
-
-
-authBtn.onclick = async () => {
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  if(!email || !password){
-    alert("Email aur password dono bharo.");
-    return;
-  }
-
-  authBtn.disabled = true;
-
-  try{
-
-    if(signupMode){
-
-      const {data,error} =
-        await db.auth.signUp({
-          email,
-          password
-        });
-
-      if(error) throw error;
-
-      if(data.session){
-
-        await startApp(data.session.user);
-
-      }else{
-
-        alert(
-          "Signup successful. Agar email confirmation enabled hai to email verify karke login karo."
-        );
-
-        signupMode = false;
-        switchAuth.click();
-      }
-
-    }else{
-
-      const {data,error} =
-        await db.auth.signInWithPassword({
-          email,
-          password
-        });
-
-      if(error) throw error;
-
-      await startApp(data.user);
-    }
-
-  }catch(err){
-
-    alert(err.message);
-
-  }finally{
-
-    authBtn.disabled = false;
-  }
-
-};
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-logoutBtn.onclick = async () => {
-
-  await db.auth.signOut();
-
-  user = null;
-  tasks = [];
-  marks = {};
-
-  app.classList.add("hidden");
-  loginScreen.classList.remove("hidden");
-
-};
-
-
-/* =========================================================
-   START APP
-   ========================================================= */
-async function ensureProfile(currentUser){
-
-  if(!currentUser) return;
-
-  const { data: existing, error: findError } =
-    await db
-      .from("profiles")
-      .select("*")
-      .eq("id", currentUser.id)
-      .maybeSingle();
-
-  if(findError) throw findError;
-
-  if(!existing){
-
-    const username =
-      currentUser.email
-        ? currentUser.email.split("@")[0]
-        : "User";
-
-    const { error: insertError } =
-      await db
-        .from("profiles")
-        .insert({
-          id: currentUser.id,
-          username: username,
-        email: currentUser.email,  
-          rank: "A",
-          lives: 3
-        });
-
-    if(insertError) throw insertError;
-  }if(existing && !existing.email){
-
-  const { error: updateError } =
-    await db
-      .from("profiles")
-      .update({
-        email: currentUser.email
-      })
-      .eq("id", currentUser.id);
-
-  if(updateError) throw updateError;
-  }
-}
-async function startApp(currentUser){
-
-  user = currentUser;
-
-  userEmail.textContent =
-    user.email || "";
-
-  loginScreen.classList.add("hidden");
-  app.classList.remove("hidden");
-await ensureProfile(user);
-  await loadData();
-
-  render();
-}
-
-
-/* =========================================================
-   LOAD DATA
-   ========================================================= */
-
-async function loadData(){
-
-  if(!user) return;
-
-  try{
-
-    const {data:taskData,error:taskError}
-      = await db
-        .from("tasks")
-        .select("*")
-        .eq("user_id",user.id)
-        .order("created_at",{ascending:true});
-
-    if(taskError) throw taskError;
-
-    tasks = taskData || [];
-
-
-    const {data:markData,error:markError}
-      = await db
-        .from("marks")
-        .select("*")
-        .eq("user_id",user.id);
-
-    if(markError) throw markError;
-
-    marks = {};
-
-    (markData || []).forEach(m => {
-
-      const taskId = m.task_id;
-
-      const date =
-        m.mark_date;
-
-      let value = null;
-
-      if(m.completed === true){
-        value = 1;
-      }else if(m.completed === false){
-        value = 2;
-      }
-
-      marks[`${taskId}|${date}`] = value;
-
-    });
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      "Data load nahi hua: " + err.message
-    );
-  }
-
-}
-
-
-/* =========================================================
-   RENDER
-   ========================================================= */
-
-function render(){
-
-  const y = view.getFullYear();
-  const m = view.getMonth();
-
-  const days =
-    new Date(y,m+1,0).getDate();
-
-  monthInput.value =
-    `${y}-${pad(m+1)}`;
-
-  monthTitle.textContent =
-    view.toLocaleDateString("en-IN",{
-      month:"long",
-      year:"numeric"
-    });
-
-
-  let h = `
-    <table>
-      <thead>
-        <tr>
-          <th>Task</th>
-          <th>Time</th>
-  `;
-
-  for(let d=1;d<=days;d++){
-
-    h += `<th>${d}</th>`;
-  }
-
-  h += `
-          <th>Delete</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-
-  if(tasks.length === 0){
-
-    h += `
-      <tr>
-        <td colspan="${days+3}" class="empty">
-          Abhi koi task nahi hai.<br>
-          Upar se task add karo 👆
-        </td>
-      </tr>
-    `;
-
-  }else{
-
-    tasks.forEach(t => {
-
-      h += `
-        <tr>
-
-          <td class="task-name">
-            ${esc(t.name)}
-          </td>
-
-          <td class="task-time">
-            ${esc(t.time)}
-          </td>
-      `;
-
-
-      for(let d=1;d<=days;d++){
-
-        const k =
-          `${t.id}|${y}-${pad(m+1)}-${pad(d)}`;
-
-        const value =
-          marks[k] || 0;
-
-        const date =
-          new Date(y,m,d);
-
-        const today =
-          dateKey(new Date()) === dateKey(date);
-
-        let text = "—";
-        let cls = "cell";
-
-        if(value === 1){
-
-          text = "✓";
-          cls += " complete";
-
-        }else if(value === 2){
-
-          text = "X";
-          cls += " missed";
-        }
-
-        if(today){
-          cls += " today";
-        }
-
-        h += `
-          <td>
-            <button
-              class="${cls}"
-              data-k="${k}"
-              aria-label="${text}"
-            >${text}</button>
-          </td>
-        `;
-      }
-
-
-      h += `
-          <td>
-            <button
-              class="del"
-              data-del="${t.id}"
-            >Delete</button>
-          </td>
-
-        </tr>
-      `;
-    });
-
-  }
-
-  h += `
-      </tbody>
-    </table>
-  `;
-
-  grid.innerHTML = h;
-
-
-  /* MARK BUTTONS */
-
-  document.querySelectorAll("[data-k]")
-    .forEach(btn => {
-
-      btn.onclick = async () => {
-
-        const k = btn.dataset.k;
-
-        const current =
-          marks[k] || 0;
-
-        /*
-          0 = not marked
-          1 = complete
-          2 = missed
-        */
-
-        const next =
-          current === 0 ? 1 :
-          current === 1 ? 2 :
-          0;
-
-        marks[k] = next;
-
-        render();
-
-        await saveMark(k,next);
-      };
-
-    });
-
-
-  /* DELETE BUTTONS */
-
-  document.querySelectorAll("[data-del]")
-    .forEach(btn => {
-
-      btn.onclick = async () => {
-
-        const id =
-          btn.dataset.del;
-
-        if(!confirm("Task delete karna hai?"))
-          return;
-
-        await deleteTask(id);
-      };
-
-    });
-
-
-  updateStats(y,m,days);
-
-}
-
-
-/* =========================================================
-   SAVE MARK
-   ========================================================= */
-/* =========================================================
-   AI ACTIVITY VERIFICATION
-   ========================================================= */
-
-const VERIFICATION_MINUTES = 30;
-
-let aiObjectModel = null;
-let aiPoseModel = null;
-
-let verificationRunning = false;
-let verificationTimer = null;
-let verificationStream = null;
-let verificationKey = null;
-
-let verificationProgress = 0;
-let lastPose = null;
-
-
-/* ---------- TASK TYPE ---------- */
-
-function getTaskType(task){
-
-  const text =
-    `${task.name || ""} ${task.title || ""}`
-      .toLowerCase()
-      .trim();
-
-  if(
-    /running|run|jogging|jog| दौड़|दौड़/.test(text)
-  ){
-    return "running";
-  }
-
-  if(
-    /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/.test(text)
-  ){
-    return "study";
-  }
-
-  if(
-    /water|paani|pani|drink|drinking|hydration|पानी/.test(text)
-  ){
-    return "water";
-  }
-
-  if(
-    /exercise|workout|gym|push.?up|squat|yoga/.test(text)
-  ){
-    return "exercise";
-  }
-
-  return "general";
-}
-
-
-/* ---------- STATUS ---------- */
-
-function getVerificationStatus(task,date){
-
-  const mark =
-    marks[`${task.id}|${date}`];
-
-  if(mark === 1)
-    return "done";
-
-  const taskMinutes =
-    parseTaskTime(task.time);
-
-  if(taskMinutes === null)
-    return "before";
-
-  const target =
-    new Date(`${date}T00:00:00`);
-
-  target.setHours(
-    Math.floor(taskMinutes / 60),
-    taskMinutes % 60,
-    0,
-    0
-  );
-
-  const start =
-    target.getTime();
-
-  const end =
-    start +
-    VERIFICATION_MINUTES *
-    60 *
-    1000;
-
-  const now =
-    Date.now();
-
-  if(
-    target.toDateString() !==
-    new Date().toDateString()
-  ){
-
-    if(target > new Date())
-      return "future";
-
-    return "expired";
-  }
-
-  if(now < start)
-    return "before";
-
-  if(now <= end)
-    return "window";
-
-  return "expired";
-}
-
-
-/* ---------- AI LOAD ---------- */
-
-async function loadAIModels(){
-
-  if(!aiObjectModel){
-
-    aiObjectModel =
-      await cocoSsd.load();
-
-  }
-
-  if(!aiPoseModel){
-
-    aiPoseModel =
-      await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet,
-        {
-          modelType:
-            poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
-        }
-      );
-
-  }
-
-}
-
-
-/* ---------- VERIFICATION UI ---------- */
-
-function createVerificationUI(task){
-
-  const old =
-    document.getElementById(
-      "aiVerificationBox"
-    );
-
-  if(old)
-    old.remove();
-
-  const type =
-    getTaskType(task);
-
-  let instruction =
-    "Camera ke saamne activity karo.";
-
-  if(type === "running")
-    instruction =
-      "🏃 Running karo. Body movement verify hogi.";
-
-  if(type === "study")
-    instruction =
-      "📚 Book/notebook ke saath study karo.";
-
-  if(type === "water")
-    instruction =
-      "💧 Bottle ya glass ke saath paani piyo.";
-
-  if(type === "exercise")
-    instruction =
-      "💪 Exercise movement karo.";
-
-  const box =
-    document.createElement("div");
-
-  box.id =
-    "aiVerificationBox";
-
-  box.innerHTML = `
-
-    <div style="
-      position:fixed;
-      inset:0;
-      z-index:999999;
-      background:rgba(0,0,0,.82);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-    ">
-
-      <div style="
-        width:min(600px,96vw);
-        background:#101827;
-        color:white;
-        border:1px solid #34415d;
-        border-radius:20px;
-        padding:22px;
-        box-shadow:0 25px 80px rgba(0,0,0,.6);
-        text-align:center;
-      ">
-
-        <h2 style="
-          margin:0 0 8px;
-          color:white;
-        ">
-          🤖 Activity Verification
-        </h2>
-
-        <p id="aiInstruction"
-           style="
-             color:#dbe4ff;
-             font-size:16px;
-             margin:8px 0 16px;
-           ">
-          ${instruction}
-        </p>
-
-        <video
-          id="aiVerificationVideo"
-          autoplay
-          muted
-          playsinline
-          style="
-            width:100%;
-            max-height:360px;
-            object-fit:cover;
-            border-radius:14px;
-            background:#050914;
-            border:1px solid #394660;
-          ">
-        </video>
-
-        <div style="
-          margin-top:16px;
-          height:14px;
-          background:#273248;
-          border-radius:20px;
-          overflow:hidden;
-        ">
-
-          <div
-            id="aiProgress"
-            style="
-              width:0%;
-              height:100%;
-              background:#39d98a;
-              transition:.25s;
-            ">
-          </div>
-
-        </div>
-
-        <div
-          id="aiStatus"
-          style="
-            color:white;
-            font-size:16px;
-            font-weight:600;
-            margin:14px 0;
-          ">
-          AI models load ho rahe hain...
-        </div>
-
-        <button
-          id="aiCancel"
-          style="
-            padding:10px 22px;
-            border-radius:10px;
-            border:1px solid #52617e;
-            background:#182238;
-            color:white;
-            cursor:pointer;
-          ">
-          Cancel
-        </button>
-
-      </div>
-
-    </div>
-  `;
-
-  document.body.appendChild(box);
-
-  document
-    .getElementById("aiCancel")
-    .onclick =
-      closeAIVerification;
-}
-
-
-/* ---------- CLOSE ---------- */
-
-function closeAIVerification(){
-
-  if(verificationTimer){
-
-    clearInterval(
-      verificationTimer
-    );
-
-    verificationTimer =
-      null;
-  }
-
-  if(verificationStream){
-
-    verificationStream
-      .getTracks()
-      .forEach(
-        track => track.stop()
-      );
-
-    verificationStream =
-      null;
-  }
-
-  const box =
-    document.getElementById(
-      "aiVerificationBox"
-    );
-
-  if(box)
-    box.remove();
-
-  verificationRunning =
-    false;
-
-  verificationKey =
-    null;
-
-  verificationProgress =
-    0;
-
-  lastPose =
-    null;
-}
-
-
-/* ---------- OBJECT HELPERS ---------- */
-
-function objectDetected(
-  predictions,
-  names
-){
-
-  return predictions.some(
-    p =>
-      names.includes(
-        p.class.toLowerCase()
-      ) &&
-      p.score >= 0.55
-  );
-
-}
-
-
-/* ---------- POSE MOVEMENT ---------- */
-
-function poseMovementDetected(
-  pose
-){
-
-  if(!pose)
-    return false;
-
-  const points =
-    pose.keypoints || [];
-
-  const important = [
-    "left_knee",
-    "right_knee",
-    "left_ankle",
-    "right_ankle",
-    "left_wrist",
-    "right_wrist"
-  ];
-
-  const current = {};
-
-  points.forEach(p => {
-
-    if(
-      important.includes(
-        p.name
-      ) &&
-      p.score > 0.35
-    ){
-
-      current[p.name] = {
-        x:p.x,
-        y:p.y
-      };
-
-    }
-
-  });
-
-  if(!lastPose){
-
-    lastPose =
-      current;
-
-    return false;
-  }
-
-  let movement = 0;
-  let count = 0;
-
-  important.forEach(name => {
-
-    if(
-      current[name] &&
-      lastPose[name]
-    ){
-
-      movement +=
-        Math.hypot(
-          current[name].x -
-            lastPose[name].x,
-
-          current[name].y -
-            lastPose[name].y
-        );
-
-      count++;
-
-    }
-
-  });
-
-  lastPose =
-    current;
-
-  if(!count)
-    return false;
+function dateKey(d){
 
   return (
-    movement / count
-  ) > 12;
-
-}
-
-
-/* ---------- TASK VERIFICATION ---------- */
-
-async function verifyTaskFrame(
-  task,
-  video
-){
-
-  const type =
-    getTaskType(task);
-
-  const predictions =
-    await aiObjectModel.detect(
-      video
-    );
-
-  let pose =
-    null;
-
-  try{
-
-    const poses =
-      await aiPoseModel.estimatePoses(
-        video
-      );
-
-    pose =
-      poses[0] || null;
-
-  }catch(e){
-
-    console.log(
-      "Pose error:",
-      e
-    );
-
-  }
-
-
-  const person =
-    predictions.some(
-      p =>
-        p.class === "person" &&
-        p.score >= .55
-    );
-
-
-  if(!person){
-
-    return {
-      valid:false,
-      reason:
-        "Person camera ke saamne nahi mila."
-    };
-
-  }
-
-
-  /* RUNNING */
-
-  if(type === "running"){
-
-    const moving =
-      poseMovementDetected(
-        pose
-      );
-
-    return {
-      valid:moving,
-      reason:
-        moving
-          ? "🏃 Running movement detected."
-          : "🏃 Running movement chahiye."
-    };
-
-  }
-
-
-  /* EXERCISE */
-
-  if(type === "exercise"){
-
-    const moving =
-      poseMovementDetected(
-        pose
-      );
-
-    return {
-      valid:moving,
-      reason:
-        moving
-          ? "💪 Exercise movement detected."
-          : "💪 Exercise movement chahiye."
-    };
-
-  }
-
-
-  /* WATER */
-
-  if(type === "water"){
-
-    const bottle =
-      objectDetected(
-        predictions,
-        ["bottle"]
-      );
-
-    const cup =
-      objectDetected(
-        predictions,
-        ["cup"]
-      );
-
-    return {
-      valid:
-        bottle || cup,
-
-      reason:
-        bottle || cup
-          ? "💧 Bottle/glass detected."
-          : "💧 Bottle ya glass camera mein dikhao."
-    };
-
-  }
-
-
-  /* STUDY */
-
-  if(type === "study"){
-
-    /*
-       COCO-SSD does not reliably provide
-       a 'book' class.
-
-       So require a person and a
-       book/notebook-like rectangular
-       object near the lower part
-       of the frame.
-    */
-
-    const laptop =
-      objectDetected(
-        predictions,
-        ["laptop"]
-      );
-
-    /*
-       Laptop is NOT treated as a book.
-       This is intentionally strict.
-    */
-
-    return {
-      valid:false,
-      reason:
-        "📚 Book/notebook verification ke liye dedicated book model chahiye."
-    };
-
-  }
-
-
-  /* GENERAL */
-
-  return {
-    valid:true,
-    reason:
-      "✅ Person detected."
-  };
-
-}
-
-
-/* ---------- START ---------- */
-
-async function startAIVerification(
-  k,
-  task
-){
-
-  if(verificationRunning)
-    return;
-
-  verificationRunning =
-    true;
-
-  verificationKey =
-    k;
-
-  verificationProgress =
-    0;
-
-  createVerificationUI(
-    task
-  );
-
-  const status =
-    document.getElementById(
-      "aiStatus"
-    );
-
-  const progress =
-    document.getElementById(
-      "aiProgress"
-    );
-
-  const video =
-    document.getElementById(
-      "aiVerificationVideo"
-    );
-
-  try{
-
-    status.textContent =
-      "AI models load ho rahe hain...";
-
-    await loadAIModels();
-
-    status.textContent =
-      "Camera permission do...";
-
-    verificationStream =
-      await navigator.mediaDevices
-        .getUserMedia({
-
-          video:{
-            facingMode:"user",
-            width:{ideal:640},
-            height:{ideal:480}
-          },
-
-          audio:false
-
-        });
-
-    video.srcObject =
-      verificationStream;
-
-    await video.play();
-
-    status.textContent =
-      "Activity verify ho rahi hai...";
-
-    verificationTimer =
-      setInterval(
-        async ()=>{
-
-          if(
-            !verificationRunning ||
-            !verificationKey
-          )
-            return;
-
-          const currentStatus =
-            getVerificationStatus(
-              task,
-              verificationKey.split("|")[1]
-            );
-
-          if(
-            currentStatus !== "window"
-          ){
-
-            closeAIVerification();
-
-            return;
-          }
-
-          const result =
-            await verifyTaskFrame(
-              task,
-              video
-            );
-
-          status.textContent =
-            result.reason;
-
-          if(result.valid){
-
-            verificationProgress += 5;
-
-          }else{
-
-            verificationProgress =
-              Math.max(
-                0,
-                verificationProgress - 1
-              );
-
-          }
-
-          progress.style.width =
-            Math.min(
-              100,
-              verificationProgress
-            ) + "%";
-
-
-          if(
-            verificationProgress >= 100
-          ){
-
-            clearInterval(
-              verificationTimer
-            );
-
-            verificationTimer =
-              null;
-
-            status.textContent =
-              "✅ Verification successful!";
-
-            progress.style.width =
-              "100%";
-
-            /*
-               IMPORTANT:
-               close first, then save once.
-            */
-
-            const savedKey =
-              verificationKey;
-
-            closeAIVerification();
-
-            if(
-              marks[savedKey] !== 1
-            ){
-
-              await saveMark(
-                savedKey,
-                1
-              );
-
-            }
-
-            render();
-
-          }
-
-        },
-        1000
-      );
-
-  }catch(error){
-
-    console.error(
-      "AI verification:",
-      error
-    );
-
-    status.textContent =
-      "❌ Camera/AI start nahi hua.";
-
-    const box =
-      document.getElementById(
-        "aiVerificationBox"
-      );
-
-    if(box){
-
-      const p =
-        document.createElement(
-          "p"
-        );
-
-      p.style.color =
-        "#ff7b7b";
-
-      p.textContent =
-        error.message ||
-        "Camera permission allow karo.";
-
-      box
-        .querySelector(
-          "#aiStatus"
-        )
-        .appendChild(p);
-
-    }
-
-  }
-
-}
-
-
-/* ---------- MANUAL MARK BLOCK ---------- */
-
-document.addEventListener(
-  "click",
-  function(event){
-
-    const button =
-      event.target.closest(
-        "[data-k]"
-      );
-
-    if(!button)
-      return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const k =
-      button.dataset.k;
-
-    if(!k)
-      return;
-
-    if(marks[k] === 1)
-      return;
-
-    const parts =
-      k.split("|");
-
-    const taskId =
-      parts[0];
-
-    const date =
-      parts[1];
-
-    const task =
-      tasks.find(
-        t =>
-          String(t.id) ===
-          String(taskId)
-      );
-
-    if(!task)
-      return;
-
-    const status =
-      getVerificationStatus(
-        task,
-        date
-      );
-
-    if(status === "window"){
-
-      startAIVerification(
-        k,
-        task
-      );
-
-      return;
-    }
-
-    if(status === "future"){
-
-      alert(
-        "⏰ Verification task ke time par available hogi."
-      );
-
-      return;
-    }
-
-    if(status === "before"){
-
-      alert(
-        "⏰ Verification window abhi start nahi hui."
-      );
-
-      return;
-    }
-
-    if(status === "expired"){
-
-      alert(
-        "❌ Verification window khatam ho gayi."
-      );
-
-      return;
-    }
-
-  },
-  true
-);
-
-
-/* ---------- AUTO EXPIRED ---------- */
-
-function checkExpiredTasks(){
-
-  if(!user || !tasks.length)
-    return;
-
-  const today =
-    dateKey(
-      new Date()
-    );
-
-  tasks.forEach(
-    task => {
-
-      const status =
-        getVerificationStatus(
-          task,
-          today
-        );
-
-      if(
-        status === "expired"
-      ){
-
-        const k =
-          `${task.id}|${today}`;
-
-        if(!marks[k]){
-
-          markAsMissed(
-            task.id,
-            today
-          );
-
-        }
-
-      }
-
-    }
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth()+1) +
+    "-" +
+    pad(d.getDate())
   );
 
 }
 
-setInterval(
-  checkExpiredTasks,
-  30000
-);
-  /* =========================================================
-   CAMERA VERIFICATION
-   ========================================================= */
-
-
-
-
-
-function createVerificationBox(){
-
-  if(document.getElementById("verificationBox")) return;
-
-  const box = document.createElement("div");
-
-  box.id = "verificationBox";
-
-  box.innerHTML = `
-    <div style="
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.75);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:99999;
-      padding:20px;
-    ">
-
-      <div style="
-        width:min(520px,95vw);
-        background:white;
-        border-radius:18px;
-        padding:20px;
-        text-align:center;
-        box-shadow:0 20px 60px rgba(0,0,0,.4);
-      ">
-
-        <h2 style="margin-top:0">
-          🏃 Activity Verification
-        </h2>
-
-        <p id="verifyMessage">
-          Camera start ho rahi hai...
-        </p>
-
-        <video
-          id="verifyVideo"
-          autoplay
-          muted
-          playsinline
-          style="
-            width:100%;
-            max-height:300px;
-            object-fit:cover;
-            border-radius:14px;
-            background:#111;
-          ">
-        </video>
-
-        <div style="
-          margin-top:15px;
-          height:12px;
-          background:#eee;
-          border-radius:10px;
-          overflow:hidden;
-        ">
-          <div id="verifyProgress"
-            style="
-              width:0%;
-              height:100%;
-              background:#22a060;
-              transition:.3s;
-            ">
-          </div>
-        </div>
-
-        <p id="verifyStatus">
-          Movement detect hone ka wait...
-        </p>
-
-        <button
-          id="cancelVerification"
-          style="
-            padding:10px 20px;
-            border-radius:10px;
-            border:1px solid #ccc;
-            background:white;
-            cursor:pointer;
-          ">
-          Cancel
-        </button>
-
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(box);
-
-  document
-    .getElementById("cancelVerification")
-    .onclick = closeVerification;
-}
-
-
-function closeVerification(){
-
-  if(verificationStream){
-
-    verificationStream
-      .getTracks()
-      .forEach(track => track.stop());
-
-    verificationStream = null;
-  }
-
-  if(verificationTimer){
-
-    clearInterval(verificationTimer);
-    verificationTimer = null;
-  }
-
-  const box = document.getElementById("verificationBox");
-
-  if(box)
-    box.remove();
-
-  verificationRunning = false;
-}
-
-
-/*
-   Basic camera movement verification.
-
-   Ye camera frames ke beech movement detect karta hai.
-   Ye kisi person ko 100% "running" prove nahi karta.
-*/
-async function startCameraVerification(k){
-
-  if(verificationRunning) return;
-
-  verificationRunning = true;
-
-  createVerificationBox();
-
-  const video =
-    document.getElementById("verifyVideo");
-
-  const message =
-    document.getElementById("verifyMessage");
-
-  const status =
-    document.getElementById("verifyStatus");
-
-  const progress =
-    document.getElementById("verifyProgress");
-
-  try{
-
-    verificationStream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video:{
-          facingMode:"user",
-          width:{ideal:640},
-          height:{ideal:480}
-        },
-
-        audio:false
-
-      });
-
-    video.srcObject = verificationStream;
-
-    await video.play();
-
-    message.textContent =
-      "Camera on hai. Ab activity karo.";
-
-    status.textContent =
-      "Movement detect ho raha hai...";
-
-    const canvas =
-      document.createElement("canvas");
-
-    const ctx =
-      canvas.getContext("2d");
-
-    canvas.width = 160;
-    canvas.height = 120;
-
-    let previousFrame = null;
-
-    let movementScore = 0;
-
-    const requiredScore = 35;
-
-    verificationTimer =
-      setInterval(async ()=>{
-
-        if(!video.videoWidth) return;
-
-        ctx.drawImage(
-          video,
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-
-        const frame =
-          ctx.getImageData(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-
-        if(previousFrame){
-
-          let difference = 0;
-
-          for(
-            let i=0;
-            i<frame.data.length;
-            i+=16
-          ){
-
-            difference +=
-              Math.abs(
-                frame.data[i] -
-                previousFrame.data[i]
-              );
-
-          }
-
-          difference /=
-            (frame.data.length / 16);
-
-          /*
-             Threshold intentionally moderate,
-             so normal camera movement can count.
-          */
-
-          if(difference > 12){
-
-            movementScore += 2;
-
-          }else{
-
-            movementScore =
-              Math.max(
-                0,
-                movementScore - .5
-              );
-
-          }
-
-          const percent =
-            Math.min(
-              100,
-              (movementScore /
-              requiredScore) * 100
-            );
-
-          progress.style.width =
-            percent + "%";
-
-          status.textContent =
-            `Activity detected: ${Math.round(percent)}%`;
-
-          if(movementScore >= requiredScore){
-
-            clearInterval(verificationTimer);
-
-            verificationTimer = null;
-
-            status.textContent =
-              "✅ Verification successful!";
-
-            progress.style.width =
-              "100%";
-
-            setTimeout(async ()=>{
-
-              closeVerification();
-
-              /*
-                 Automatically mark COMPLETE.
-              */
-
-              await saveMark(k,1);
-
-            },800);
-
-          }
-
-        }
-
-        previousFrame =
-          frame;
-
-      },500);
-
-  }catch(error){
-
-    console.error(error);
-
-    message.textContent =
-      "Camera permission required.";
-
-    status.textContent =
-      "Camera allow karo aur dobara try karo.";
-
-  }
-
-}
-
-
-/* =========================================================
-   BLOCK MANUAL TICK / CROSS
-   ========================================================= */
-
-document.addEventListener(
-  "click",
-  function(event){
-
-    const button =
-      event.target.closest("[data-k]");
-
-    if(!button) return;
-
-    /*
-       Existing manual marking ko rok do.
-    */
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const k =
-      button.dataset.k;
-
-    if(!k) return;
-
-    /*
-       Agar already complete hai
-       to kuch nahi karna.
-    */
-
-    if(marks[k] === 1)
-      return;
-
-    /*
-       Verification window check.
-    */
-
-    const parts =
-      k.split("|");
-
-    const taskId =
-      parts[0];
-
-    const date =
-      parts[1];
-
-    const task =
-      tasks.find(
-        t => String(t.id) === String(taskId)
-      );
-
-    if(!task) return;
-
-    const status =
-      getVerificationStatus(task,date);
-
-    if(status === "window"){
-
-      startCameraVerification(k);
-
-    }else if(status === "future"){
-
-      alert(
-        "⏰ Verification task ke time par available hoga."
-      );
-
-    }else if(status === "before"){
-
-      alert(
-        "⏰ Verification window abhi start nahi hui."
-      );
-
-    }else if(status === "expired"){
-
-      alert(
-        "❌ Verification time khatam ho gaya."
-      );
-
-    }
-
-  },
-  true
-);
-
-
-/* =========================================================
-   AUTOMATIC VERIFICATION WINDOW CHECK
-   ========================================================= */
-
-function checkVerificationWindows(){
-
-  if(!user || !tasks.length)
-    return;
-
-  const today =
-    dateKey(new Date());
-
-  tasks.forEach(task => {
-
-    const k =
-      `${task.id}|${today}`;
-
-    /*
-       Already complete hai to ignore.
-    */
-
-    if(marks[k] === 1)
-      return;
-
-    const status =
-      getVerificationStatus(task,today);
-
-    /*
-       Verification window start hote hi
-       automatically camera open hoga.
-    */
-
-    if(
-      status === "window" &&
-      !verificationRunning
-    ){
-
-      startCameraVerification(k);
-
-    }
-
-  });
-
-}
-
-
-/*
-   Har 10 second status check.
-*/
-
-setInterval(
-  checkVerificationWindows,
-  10000
-);
-async function saveMark(k,value){
-
-  const [taskId,date] =
-    k.split("|");
-
-  try{
-
-    if(value === 0){
-
-      const {error} =
-        await db
-          .from("marks")
-          .delete()
-          .eq("user_id",user.id)
-          .eq("task_id",taskId)
-          .eq("mark_date",date);
-
-      if(error) throw error;
-
-      return;
-    }
-
-
-    const completed =
-      value === 1;
-
-
-    const {error} =
-      await db
-        .from("marks")
-        .upsert({
-          user_id:user.id,
-          task_id:taskId,
-          mark_date:date,
-          completed:completed
-        },{
-          onConflict:
-            "user_id,task_id,mark_date"
-        });
-
-    if(error) throw error;
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      "Mark save nahi hua: " +
-      err.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ADD TASK
-   ========================================================= */
-
-document.querySelector("#add").onsubmit =
-async e => {
-
-  e.preventDefault();
-
-  const name =
-    taskInput.value.trim();
-
-  const time =
-    timeInput.value.trim();
-
-  if(!name || !time) return;
-
-  try{
-
-    const {data,error} =
-      await db
-        .from("tasks")
-        .insert({
-          user_id:user.id,
-          name:name,
-          time:time
-        })
-        .select()
-        .single();
-
-    if(error) throw error;
-
-    tasks.push(data);
-
-    taskInput.value = "";
-    timeInput.value = "";
-
-    render();
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      "Task add nahi hua: " +
-      err.message
-    );
-
-  }
-
-};
-
-
-/* =========================================================
-   DELETE TASK
-   ========================================================= */
-
-async function deleteTask(id){
-
-  try{
-
-    const {error} =
-      await db
-        .from("tasks")
-        .delete()
-        .eq("id",id)
-        .eq("user_id",user.id);
-
-    if(error) throw error;
-
-    tasks =
-      tasks.filter(t => t.id !== id);
-
-    Object.keys(marks)
-      .filter(k => k.startsWith(id+"|"))
-      .forEach(k => delete marks[k]);
-
-    render();
-
-  }catch(err){
-
-    console.error(err);
-
-    alert(
-      "Task delete nahi hua: " +
-      err.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   STATS
-   ========================================================= */
-
-function updateStats(y,m,days){
-
-  let total = 0;
-  let yes = 0;
-  let no = 0;
-
-  tasks.forEach(t => {
-
-    for(let d=1;d<=days;d++){
-
-      const k =
-        `${t.id}|${y}-${pad(m+1)}-${pad(d)}`;
-
-      const value =
-        marks[k] || 0;
-
-      if(value === 1){
-
-        yes++;
-        total++;
-
-      }else if(value === 2){
-
-        no++;
-        total++;
-
-      }
-
-    }
-
-  });
-
-
-  const rate =
-    total === 0
-      ? 0
-      : Math.round((yes/total)*100);
-
-
-  document.querySelector("#rate")
-    .textContent = rate + "%";
-
-  document.querySelector("#done")
-    .textContent = yes;
-
-  document.querySelector("#miss")
-    .textContent = no;
-
-
-  let best = 0;
-
-  tasks.forEach(t => {
-
-    let current = 0;
-
-    for(let d=1;d<=days;d++){
-
-      const k =
-        `${t.id}|${y}-${pad(m+1)}-${pad(d)}`;
-
-      if(marks[k] === 1){
-
-        current++;
-        best =
-          Math.max(best,current);
-
-      }else{
-
-        current = 0;
-      }
-    }
-
-  });
-
-
-  document.querySelector("#streak")
-    .textContent = best;
-
-}
-
-
-/* =========================================================
-   MONTH NAVIGATION
-   ========================================================= */
-
-document.querySelector("#prev").onclick =
-() => {
-
-  view.setMonth(view.getMonth()-1);
-  render();
-
-};
-
-
-document.querySelector("#next").onclick =
-() => {
-
-  view.setMonth(view.getMonth()+1);
-  render();
-
-};
-
-
-monthInput.onchange = () => {
-
-  const [y,m] =
-    monthInput.value
-      .split("-")
-      .map(Number);
-
-  view =
-    new Date(y,m-1,1);
-
-  render();
-
-};
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
 
 function esc(s){
 
-  return String(s)
+  return String(s ?? "")
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
@@ -2953,49 +903,1954 @@ function esc(s){
 
 
 /* =========================================================
-   CHECK EXISTING SESSION
+   ELEMENTS
    ========================================================= */
 
-(async function(){
+const loginScreen =
+  document.querySelector("#loginScreen");
+
+const app =
+  document.querySelector("#app");
+
+const emailInput =
+  document.querySelector("#email");
+
+const passwordInput =
+  document.querySelector("#password");
+
+const authBtn =
+  document.querySelector("#authBtn");
+
+const switchAuth =
+  document.querySelector("#switchAuth");
+
+const loginText =
+  document.querySelector("#loginText");
+
+const userEmail =
+  document.querySelector("#userEmail");
+
+const logoutBtn =
+  document.querySelector("#logout");
+
+const friendsBtn =
+  document.querySelector("#friendsBtn");
+
+const friendsPanel =
+  document.querySelector("#friendsPanel");
+
+const closeFriends =
+  document.querySelector("#closeFriends");
+
+const friendSearch =
+  document.querySelector("#friendSearch");
+
+const sendFriendRequest =
+  document.querySelector("#sendFriendRequest");
+
+const friendMessage =
+  document.querySelector("#friendMessage");
+
+const monthInput =
+  document.querySelector("#month");
+
+const monthTitle =
+  document.querySelector("#monthTitle");
+
+const taskInput =
+  document.querySelector("#task");
+
+const timeInput =
+  document.querySelector("#time");
+
+const grid =
+  document.querySelector("#grid");
+
+
+/* =========================================================
+   RANK DATA
+   ========================================================= */
+
+const rankData = {
+
+  "-A":{
+    name:"🤡 Gandu",
+    index:-1
+  },
+
+  "A":{
+    name:"😎 Chutiya",
+    index:0
+  },
+
+  "B":{
+    name:"🐃 Matthu",
+    index:1
+  },
+
+  "C":{
+    name:"💪 Mehnatti",
+    index:2
+  },
+
+  "D":{
+    name:"🥷 Jhujharu",
+    index:3
+  },
+
+  "E":{
+    name:"🗿 Dheth",
+    index:4
+  },
+
+  "F":{
+    name:"🧙 Ustaad",
+    index:5
+  },
+
+  "G":{
+    name:"👑 Legend",
+    index:6
+  },
+
+  "H":{
+    name:"🙏 Mahapurush",
+    index:7
+  }
+
+};
+
+
+function rankName(rank){
+
+  return rankData[rank]?.name ||
+    "😎 Chutiya";
+
+}
+
+
+function rankIndex(rank){
+
+  return rankData[rank]?.index ?? 0;
+
+}
+
+
+function rankFromIndex(index){
+
+  if(index < 0)
+    return "-A";
+
+  if(index > 7)
+    return "H";
+
+  return Object.keys(rankData)
+    .find(
+      r => rankData[r].index === index
+    ) || "A";
+
+}
+
+
+/* =========================================================
+   MONTHLY REQUIRED STREAK
+   ========================================================= */
+
+function requiredDays(year,month){
+
+  const totalDays =
+    new Date(
+      year,
+      month + 1,
+      0
+    ).getDate();
+
+  return totalDays - 3;
+
+}
+
+
+/* =========================================================
+   TIME
+   ========================================================= */
+
+function parseTaskTime(value){
+
+  if(!value)
+    return null;
+
+  if(
+    /^\d{2}:\d{2}$/.test(value)
+  ){
+
+    const [h,m] =
+      value
+        .split(":")
+        .map(Number);
+
+    return h * 60 + m;
+
+  }
+
+  const match =
+    value
+      .trim()
+      .match(
+        /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i
+      );
+
+  if(!match)
+    return null;
+
+  let h =
+    Number(match[1]);
+
+  const m =
+    Number(match[2]);
+
+  const ap =
+    (match[3] || "")
+      .toUpperCase();
+
+  if(
+    ap === "PM" &&
+    h < 12
+  )
+    h += 12;
+
+  if(
+    ap === "AM" &&
+    h === 12
+  )
+    h = 0;
+
+  return h * 60 + m;
+
+}
+
+
+function displayTime(value){
+
+  const mins =
+    parseTaskTime(value);
+
+  if(mins === null)
+    return value || "";
+
+  let h =
+    Math.floor(mins / 60);
+
+  const m =
+    mins % 60;
+
+  const ap =
+    h >= 12 ? "PM" : "AM";
+
+  h =
+    h % 12 || 12;
+
+  return (
+    h +
+    ":" +
+    pad(m) +
+    " " +
+    ap
+  );
+
+}
+
+
+/* =========================================================
+   TASK TYPE
+   ========================================================= */
+
+function taskType(task){
+
+  const text =
+    (task.name || "")
+      .toLowerCase();
+
+  if(
+    /running|run|jog|jogging|दौड़|दौड़/.test(text)
+  )
+    return "running";
+
+  if(
+    /exercise|workout|gym|push.?up|squat|yoga/.test(text)
+  )
+    return "exercise";
+
+  if(
+    /water|paani|pani|drink|hydration|पानी/.test(text)
+  )
+    return "water";
+
+  if(
+    /study|studying|padhai|पढ़ाई|पढाई|book|reading|read/.test(text)
+  )
+    return "study";
+
+  return "general";
+
+}
+
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+async function ensureProfile(){
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("profiles")
+      .select("*")
+      .eq("id",user.id)
+      .maybeSingle();
+
+  if(error)
+    throw error;
+
+
+  if(!data){
+
+    const username =
+      (user.email || "User")
+        .split("@")[0];
+
+    const {
+      data:created,
+      error:insertError
+    } =
+      await db
+        .from("profiles")
+        .insert({
+
+          id:user.id,
+
+          username:username,
+
+          email:user.email,
+
+          rank:"A",
+
+          lives:3
+
+        })
+        .select()
+        .single();
+
+    if(insertError)
+      throw insertError;
+
+    profile =
+      created;
+
+  }else{
+
+    profile =
+      data;
+
+    if(
+      !profile.email &&
+      user.email
+    ){
+
+      await db
+        .from("profiles")
+        .update({
+          email:user.email
+        })
+        .eq("id",user.id);
+
+      profile.email =
+        user.email;
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   LOAD USER DATA
+   ========================================================= */
+
+async function loadData(){
+
+  if(!user)
+    return;
+
+
+  const {
+    data:taskData,
+    error:taskError
+  } =
+    await db
+      .from("tasks")
+      .select("*")
+      .eq("user_id",user.id)
+      .order(
+        "created_at",
+        {ascending:true}
+      );
+
+  if(taskError)
+    throw taskError;
+
+  tasks =
+    taskData || [];
+
+
+  const {
+    data:markData,
+    error:markError
+  } =
+    await db
+      .from("marks")
+      .select("*")
+      .eq("user_id",user.id);
+
+  if(markError)
+    throw markError;
+
+
+  marks = {};
+
+
+  (markData || [])
+    .forEach(m => {
+
+      let value = 0;
+
+      if(
+        m.completed === true
+      )
+        value = 1;
+
+      else if(
+        m.completed === false
+      )
+        value = 2;
+
+      marks[
+        `${m.task_id}|${m.mark_date}`
+      ] = value;
+
+    });
+
+}
+
+
+/* =========================================================
+   MONTH STATS
+   ========================================================= */
+
+function monthStats(){
+
+  const y =
+    view.getFullYear();
+
+  const m =
+    view.getMonth();
+
+  const days =
+    new Date(
+      y,
+      m + 1,
+      0
+    ).getDate();
+
+
+  let completed = 0;
+
+  let missed = 0;
+
+  let best = 0;
+
+
+  tasks.forEach(task => {
+
+    let current = 0;
+
+
+    for(
+      let d = 1;
+      d <= days;
+      d++
+    ){
+
+      const k =
+        `${task.id}|${y}-${pad(m+1)}-${pad(d)}`;
+
+      const value =
+        marks[k] || 0;
+
+
+      if(value === 1){
+
+        completed++;
+
+        current++;
+
+        best =
+          Math.max(
+            best,
+            current
+          );
+
+      }else{
+
+        if(value === 2)
+          missed++;
+
+        current = 0;
+
+      }
+
+    }
+
+  });
+
+
+  const total =
+    completed + missed;
+
+
+  return {
+
+    completed,
+
+    missed,
+
+    best,
+
+    rate:
+      total === 0
+        ? 0
+        : Math.round(
+            completed / total * 100
+          ),
+
+    days
+
+  };
+
+}
+
+
+/* =========================================================
+   STATS UI
+   ========================================================= */
+
+function updateStats(){
+
+  const s =
+    monthStats();
+
+  document
+    .querySelector("#rate")
+    .textContent =
+      s.rate + "%";
+
+  document
+    .querySelector("#done")
+    .textContent =
+      s.completed;
+
+  document
+    .querySelector("#miss")
+    .textContent =
+      s.missed;
+
+  document
+    .querySelector("#streak")
+    .textContent =
+      s.best;
+
+}
+
+
+/* =========================================================
+   MARK SAVE
+   ========================================================= */
+
+async function saveMark(
+  key,
+  value
+){
+
+  const [
+    taskId,
+    date
+  ] =
+    key.split("|");
+
+
+  if(value === 0){
+
+    const {
+      error
+    } =
+      await db
+        .from("marks")
+        .delete()
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "task_id",
+          taskId
+        )
+        .eq(
+          "mark_date",
+          date
+        );
+
+    if(error)
+      throw error;
+
+    delete marks[key];
+
+    return;
+
+  }
+
+
+  const completed =
+    value === 1;
+
+
+  const {
+    error
+  } =
+    await db
+      .from("marks")
+      .upsert({
+
+        user_id:user.id,
+
+        task_id:taskId,
+
+        mark_date:date,
+
+        completed:completed
+
+      },{
+        onConflict:
+          "user_id,task_id,mark_date"
+      });
+
+
+  if(error)
+    throw error;
+
+
+  marks[key] =
+    value;
+
+}
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render(){
+
+  const y =
+    view.getFullYear();
+
+  const m =
+    view.getMonth();
+
+  const days =
+    new Date(
+      y,
+      m + 1,
+      0
+    ).getDate();
+
+
+  monthInput.value =
+    `${y}-${pad(m+1)}`;
+
+
+  monthTitle.textContent =
+    view.toLocaleDateString(
+      "en-IN",
+      {
+        month:"long",
+        year:"numeric"
+      }
+    );
+
+
+  let html =
+    `
+    <table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Time</th>
+    `;
+
+
+  for(
+    let d=1;
+    d<=days;
+    d++
+  ){
+
+    html +=
+      `<th>${d}</th>`;
+
+  }
+
+
+  html +=
+    `<th>Delete</th></tr></thead><tbody>`;
+
+
+  if(!tasks.length){
+
+    html +=
+      `
+      <tr>
+        <td
+          colspan="${days+3}"
+          class="empty"
+        >
+          Abhi koi task nahi hai.<br>
+          Upar se task add karo 👆
+        </td>
+      </tr>
+      `;
+
+  }else{
+
+    tasks.forEach(task => {
+
+      html +=
+        `
+        <tr>
+
+          <td class="task-name">
+            ${esc(task.name)}
+          </td>
+
+          <td class="task-time">
+            ${esc(
+              displayTime(task.time)
+            )}
+          </td>
+        `;
+
+
+      for(
+        let d=1;
+        d<=days;
+        d++
+      ){
+
+        const date =
+          `${y}-${pad(m+1)}-${pad(d)}`;
+
+        const key =
+          `${task.id}|${date}`;
+
+        const value =
+          marks[key] || 0;
+
+        const status =
+          verificationStatus(
+            task,
+            date
+          );
+
+
+        let text =
+          "—";
+
+        let cls =
+          "cell";
+
+
+        if(value === 1){
+
+          text =
+            "✓";
+
+          cls +=
+            " complete";
+
+        }
+
+        else if(value === 2){
+
+          text =
+            "X";
+
+          cls +=
+            " missed";
+
+        }
+
+        else if(
+          status === "window"
+        ){
+
+          cls +=
+            " verify";
+
+        }
+
+        else if(
+          status === "future"
+        ){
+
+          cls +=
+            " locked";
+
+        }
+
+
+        if(
+          date ===
+          dateKey(new Date())
+        ){
+
+          cls +=
+            " today";
+
+        }
+
+
+        html +=
+          `
+          <td>
+
+            <button
+              class="${cls}"
+              data-k="${key}"
+            >
+              ${text}
+            </button>
+
+          </td>
+          `;
+
+      }
+
+
+      html +=
+        `
+          <td>
+            <button
+              class="del"
+              data-del="${task.id}"
+            >
+              Delete
+            </button>
+          </td>
+
+        </tr>
+        `;
+
+    });
+
+  }
+
+
+  html +=
+    `
+      </tbody>
+    </table>
+    `;
+
+
+  grid.innerHTML =
+    html;
+
+
+  updateStats();
+
+
+  document
+    .querySelectorAll("[data-del]")
+    .forEach(button => {
+
+      button.onclick =
+        async () => {
+
+          if(
+            !confirm(
+              "Task delete karna hai?"
+            )
+          )
+            return;
+
+
+          await deleteTask(
+            button.dataset.del
+          );
+
+        };
+
+    });
+
+
+  document
+    .querySelectorAll("[data-k]")
+    .forEach(button => {
+
+      button.onclick =
+        async () => {
+
+          const key =
+            button.dataset.k;
+
+          if(
+            marks[key] === 1
+          )
+            return;
+
+
+          const [
+            taskId,
+            date
+          ] =
+            key.split("|");
+
+
+          const task =
+            tasks.find(
+              t =>
+                String(t.id) ===
+                String(taskId)
+            );
+
+
+          if(!task)
+            return;
+
+
+          const status =
+            verificationStatus(
+              task,
+              date
+            );
+
+
+          if(
+            status === "window"
+          ){
+
+            startVerification(
+              key,
+              task
+            );
+
+            return;
+
+          }
+
+
+          if(
+            status === "future"
+          ){
+
+            alert(
+              "⏰ Verification window task ke time par khulegi."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            status === "expired"
+          ){
+
+            await autoMiss(
+              task,
+              date
+            );
+
+            alert(
+              "❌ Verification window khatam ho chuki thi."
+            );
+
+          }
+
+        };
+
+    });
+
+}
+
+
+/* =========================================================
+   DELETE
+   ========================================================= */
+
+async function deleteTask(id){
+
+  const {
+    error
+  } =
+    await db
+      .from("tasks")
+      .delete()
+      .eq("id",id)
+      .eq("user_id",user.id);
+
+
+  if(error){
+
+    alert(
+      "Task delete nahi hua: " +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  tasks =
+    tasks.filter(
+      t =>
+        String(t.id) !==
+        String(id)
+    );
+
+
+  Object.keys(marks)
+    .filter(
+      k =>
+        k.startsWith(
+          id + "|"
+        )
+    )
+    .forEach(
+      k =>
+        delete marks[k]
+    );
+
+
+  render();
+
+}
+
+
+/* =========================================================
+   ADD TASK
+   ========================================================= */
+
+document
+  .querySelector("#add")
+  .onsubmit =
+    async event => {
+
+      event.preventDefault();
+
+
+      const name =
+        taskInput.value.trim();
+
+      const time =
+        timeInput.value;
+
+
+      if(
+        !name ||
+        !time
+      )
+        return;
+
+
+      const {
+        data,
+        error
+      } =
+        await db
+          .from("tasks")
+          .insert({
+
+            user_id:user.id,
+
+            name:name,
+
+            time:time
+
+          })
+          .select()
+          .single();
+
+
+      if(error){
+
+        alert(
+          "Task add nahi hua: " +
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      tasks.push(data);
+
+
+      taskInput.value =
+        "";
+
+      timeInput.value =
+        "";
+
+
+      render();
+
+    };
+
+
+/* =========================================================
+   MONTH NAVIGATION
+   ========================================================= */
+
+document
+  .querySelector("#prev")
+  .onclick =
+    () => {
+
+      view.setMonth(
+        view.getMonth() - 1
+      );
+
+      render();
+
+    };
+
+
+document
+  .querySelector("#next")
+  .onclick =
+    () => {
+
+      view.setMonth(
+        view.getMonth() + 1
+      );
+
+      render();
+
+    };
+
+
+monthInput.onchange =
+  () => {
+
+    const [
+      y,
+      m
+    ] =
+      monthInput.value
+        .split("-")
+        .map(Number);
+
+
+    view =
+      new Date(
+        y,
+        m - 1,
+        1
+      );
+
+
+    render();
+
+  };
+
+
+/* =========================================================
+   PART 1 END
+   ========================================================= */
+
+</script>
+
+</body>
+</html>
+/* =========================================================
+   VERIFICATION SYSTEM
+   ========================================================= */
+
+const VERIFICATION_MINUTES = 30;
+
+let verificationRunning = false;
+let verificationTimer = null;
+let verificationStream = null;
+let verificationKey = null;
+let verificationTask = null;
+
+let aiObjectModel = null;
+let aiPoseModel = null;
+
+
+/* =========================================================
+   VERIFICATION STATUS
+   ========================================================= */
+
+function verificationStatus(task,date){
+
+  const key =
+    `${task.id}|${date}`;
+
+  const value =
+    marks[key] || 0;
+
+
+  if(value === 1)
+    return "done";
+
+  if(value === 2)
+    return "expired";
+
+
+  const minutes =
+    parseTaskTime(task.time);
+
+
+  if(minutes === null)
+    return "window";
+
+
+  const target =
+    new Date(`${date}T00:00:00`);
+
+
+  target.setHours(
+    Math.floor(minutes / 60),
+    minutes % 60,
+    0,
+    0
+  );
+
+
+  const now =
+    new Date();
+
+
+  const start =
+    target.getTime();
+
+
+  const end =
+    start +
+    VERIFICATION_MINUTES *
+    60 *
+    1000;
+
+
+  /*
+     Kisi aur date ka task.
+  */
+
+  if(
+    date !==
+    dateKey(now)
+  ){
+
+    if(
+      target.getTime() >
+      now.getTime()
+    ){
+
+      return "future";
+
+    }
+
+    return "expired";
+
+  }
+
+
+  if(
+    now.getTime() <
+    start
+  ){
+
+    return "future";
+
+  }
+
+
+  if(
+    now.getTime() <=
+    end
+  ){
+
+    return "window";
+
+  }
+
+
+  return "expired";
+
+}
+
+
+/* =========================================================
+   LOAD AI MODELS
+   ========================================================= */
+
+async function loadAIModels(){
+
+  if(!aiObjectModel){
+
+    aiObjectModel =
+      await cocoSsd.load();
+
+  }
+
+
+  if(!aiPoseModel){
+
+    aiPoseModel =
+      await poseDetection.createDetector(
+
+        poseDetection.SupportedModels.MoveNet,
+
+        {
+          modelType:
+            poseDetection.movenet.modelType
+              .SINGLEPOSE_LIGHTNING
+        }
+
+      );
+
+  }
+
+}
+
+
+/* =========================================================
+   CREATE VERIFICATION MODAL
+   ========================================================= */
+
+function createVerificationModal(task){
+
+  const old =
+    document.querySelector(
+      "#verificationOverlay"
+    );
+
+
+  if(old)
+    old.remove();
+
+
+  const type =
+    taskType(task);
+
+
+  let instruction =
+    "🤖 Camera ke saamne activity karo.";
+
+
+  if(type === "running"){
+
+    instruction =
+      "🏃 Running karo. Body movement AI verify karega.";
+
+  }
+
+
+  if(type === "exercise"){
+
+    instruction =
+      "💪 Exercise karo. Body movement AI verify karega.";
+
+  }
+
+
+  if(type === "water"){
+
+    instruction =
+      "💧 Bottle ya glass camera me dikhao.";
+
+  }
+
+
+  if(type === "study"){
+
+    instruction =
+      "📚 Study setup camera me clearly dikhao.";
+
+  }
+
+
+  const overlay =
+    document.createElement("div");
+
+
+  overlay.id =
+    "verificationOverlay";
+
+
+  overlay.className =
+    "overlay";
+
+
+  overlay.innerHTML = `
+
+    <div class="modal">
+
+      <h2>
+        🤖 Activity Verification
+      </h2>
+
+      <p>
+        ${instruction}
+      </p>
+
+      <video
+        id="verificationVideo"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+      <div class="progress">
+
+        <div
+          id="verificationProgress">
+        </div>
+
+      </div>
+
+      <p id="verificationStatus">
+        Verification start karne ke liye button dabao.
+      </p>
+
+      <button
+        id="startVerificationButton">
+        📷 Start Verification
+      </button>
+
+      <button
+        id="cancelVerificationButton">
+        Cancel
+      </button>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  document
+    .querySelector(
+      "#startVerificationButton"
+    )
+    .onclick =
+      runVerification;
+
+
+  document
+    .querySelector(
+      "#cancelVerificationButton"
+    )
+    .onclick =
+      closeVerification;
+
+}
+
+
+/* =========================================================
+   START VERIFICATION
+   ========================================================= */
+
+function startVerification(
+  key,
+  task
+){
+
+  if(
+    verificationRunning
+  )
+    return;
+
+
+  verificationKey =
+    key;
+
+  verificationTask =
+    task;
+
+
+  createVerificationModal(
+    task
+  );
+
+}
+
+
+/* =========================================================
+   CLOSE VERIFICATION
+   ========================================================= */
+
+function closeVerification(){
+
+  if(
+    verificationTimer
+  ){
+
+    clearInterval(
+      verificationTimer
+    );
+
+    verificationTimer =
+      null;
+
+  }
+
+
+  if(
+    verificationStream
+  ){
+
+    verificationStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+    verificationStream =
+      null;
+
+  }
+
+
+  const overlay =
+    document.querySelector(
+      "#verificationOverlay"
+    );
+
+
+  if(overlay)
+    overlay.remove();
+
+
+  verificationRunning =
+    false;
+
+  verificationKey =
+    null;
+
+  verificationTask =
+    null;
+
+}
+
+
+/* =========================================================
+   RUN VERIFICATION
+   ========================================================= */
+
+async function runVerification(){
+
+  if(
+    verificationRunning
+  )
+    return;
+
+
+  verificationRunning =
+    true;
+
+
+  const video =
+    document.querySelector(
+      "#verificationVideo"
+    );
+
+
+  const status =
+    document.querySelector(
+      "#verificationStatus"
+    );
+
+
+  const progress =
+    document.querySelector(
+      "#verificationProgress"
+    );
+
+
+  const startButton =
+    document.querySelector(
+      "#startVerificationButton"
+    );
+
+
+  try{
+
+    startButton.disabled =
+      true;
+
+
+    status.textContent =
+      "🤖 AI models load ho rahe hain...";
+
+
+    await loadAIModels();
+
+
+    status.textContent =
+      "📷 Camera permission do...";
+
+
+    verificationStream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video:{
+            facingMode:"user",
+
+            width:{
+              ideal:640
+            },
+
+            height:{
+              ideal:480
+            }
+
+          },
+
+          audio:false
+
+        });
+
+
+    video.srcObject =
+      verificationStream;
+
+
+    await video.play();
+
+
+    status.textContent =
+      "🔍 Activity verify ho rahi hai...";
+
+
+    let score = 0;
+
+    let lastPoints = null;
+
+
+    verificationTimer =
+      setInterval(
+        async () => {
+
+          if(
+            !verificationRunning
+          )
+            return;
+
+
+          if(
+            !verificationTask ||
+            !verificationKey
+          )
+            return;
+
+
+          const [
+            taskId,
+            date
+          ] =
+            verificationKey
+              .split("|");
+
+
+          const currentStatus =
+            verificationStatus(
+              verificationTask,
+              date
+            );
+
+
+          /*
+             Window expire hote hi
+             verification band.
+          */
+
+          if(
+            currentStatus !==
+            "window"
+          ){
+
+            closeVerification();
+
+
+            if(
+              currentStatus ===
+              "expired"
+            ){
+
+              await autoMiss(
+                verificationTask,
+                date
+              );
+
+            }
+
+
+            return;
+
+          }
+
+
+          try{
+
+            const predictions =
+              await aiObjectModel.detect(
+                video
+              );
+
+
+            const person =
+              predictions.some(
+                p =>
+                  p.class ===
+                  "person" &&
+                  p.score >= .55
+              );
+
+
+            const type =
+              taskType(
+                verificationTask
+              );
+
+
+            let valid =
+              false;
+
+
+            /*
+               GENERAL
+            */
+
+            if(
+              type ===
+      /* =========================================================
+   FRIEND SYSTEM
+   ========================================================= */
+
+async function sendFriendRequest(){
+
+  const email =
+    document
+      .querySelector("#friendSearch")
+      .value
+      .trim()
+      .toLowerCase();
+
+  if(!email){
+
+    friendMessage.textContent =
+      "Friend ka email bharo.";
+
+    return;
+
+  }
+
+
+  if(
+    !user ||
+    email ===
+    (user.email || "")
+      .toLowerCase()
+  ){
+
+    friendMessage.textContent =
+      "Khud ko friend request nahi bhej sakte.";
+
+    return;
+
+  }
+
 
   try{
 
     const {
-      data:{session}
-    } = await db.auth.getSession();
+      data:friend,
+      error:findError
+    } =
+      await db
+        .from("profiles")
+        .select(
+          "id,username,email,rank,lives"
+        )
+        .eq(
+          "email",
+          email
+        )
+        .maybeSingle();
 
-    if(session){
 
-      await startApp(session.user);
+    if(findError)
+      throw findError;
+
+
+    if(!friend){
+
+      friendMessage.textContent =
+        "Is email se koi account nahi mila.";
+
+      return;
 
     }
 
-  }catch(err){
 
-    console.error(err);
+    const {
+      data:existing
+    } =
+      await db
+        .from("friend_requests")
+        .select(
+          "id,status"
+        )
+        .eq(
+          "sender_id",
+          user.id
+        )
+        .eq(
+          "receiver_id",
+          friend.id
+        )
+        .maybeSingle();
+
+
+    if(existing){
+
+      friendMessage.textContent =
+        "Friend request already bheji ja chuki hai.";
+
+      return;
+
+    }
+
+
+    const {
+      error:insertError
+    } =
+      await db
+        .from("friend_requests")
+        .insert({
+
+          sender_id:user.id,
+
+          receiver_id:friend.id,
+
+          status:"pending"
+
+        });
+
+
+    if(insertError)
+      throw insertError;
+
+
+    friendMessage.textContent =
+      "✅ Friend request bhej di gayi.";
+
+    document
+      .querySelector(
+        "#friendSearch"
+      )
+      .value = "";
+
+
+  }catch(error){
+
+    console.error(error);
+
+    friendMessage.textContent =
+      "Friend request bhejne me error: " +
+      error.message;
 
   }
 
-})();
+}
 
 
 /* =========================================================
-   AUTH STATE LISTENER
+   LOAD FRIEND REQUESTS
    ========================================================= */
 
-db.auth.onAuthStateChange(
-  async (event,session) => {
+async function loadFriendRequests(){
 
-    if(session && !user){
+  if(!user)
+    return;
 
-      await startApp(session.user);
 
-    }
+  const box =
+    document
+      .querySelector(
+        "#friendRequests"
+      );
+
+
+  const {
+    data,
+    error
+  } =
+    await db
+      .from("friend_requests")
+      .select(
+        "id,sender_id,status"
+      )
+      .eq(
+        "receiver_id",
+        user.id
+      )
+      .eq(
+        "status",
+        "pending"
+      );
+
+
+  if(error){
+
+    console.error(error);
+
+    box.innerHTML =
+      `<p class="empty">
+        ${esc(error.message)}
+      </p>`;
+
+    return;
 
   }
-);
 
-</script>
+
+  if(
+   </script>
 
 </body>
 </html>
