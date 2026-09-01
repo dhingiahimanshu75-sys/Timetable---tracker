@@ -1,0 +1,34 @@
+name: Fix auto missed tasks
+on:
+  workflow_dispatch:
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch auto-missed logic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          if 'async function checkExpiredTasks(){' not in s:
+              marker='function render(){'
+              fn='''async function checkExpiredTasks(){\nif(!user||!tasks.length)return;\nconst now=Date.now();let changed=false,missedAdded=0;\nfor(const t of tasks){\nconst mins=parseTaskTime(t.time);if(mins===null)continue;\nconst y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();\nfor(let d=1;d<=days;d++){\nconst date=`${y}-${pad(m+1)}-${pad(d)}`,k=taskDateKey(t,date);if(marks[k])continue;\nconst due=new Date(`${date}T00:00:00`);due.setHours(Math.floor(mins/60),mins%60,0,0);\nif(now<=due.getTime()+30*60000)continue;\ntry{await saveMark(k,2);missedAdded++;changed=true}catch(e){console.error("Auto-miss save:",e)}\n}\n}\nif(missedAdded){\nlet lives=Math.max(0,Number(profile?.lives??3)-missedAdded);let rank=profile?.rank||"A";\nif(lives===0){rank=rankCode(rankIndex(rank)-1);lives=3}\nconst r=await db.from("profiles").update({lives,rank}).eq("id",user.id).select().single();if(!r.error)profile=r.data;\n}\nif(changed)render();\n}\n'''
+              if marker not in s: raise SystemExit('render marker missing')
+              s=s.replace(marker,fn+marker,1)
+          if 'setInterval(()=>checkExpiredTasks(),60000)' not in s:
+              needle='render();'
+              # Add polling after the first startup render invocation near the end.
+              s=s.replace(needle,needle+'\nsetInterval(()=>checkExpiredTasks(),60000);',1)
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Fix automatic missed task marking'
+          git push
