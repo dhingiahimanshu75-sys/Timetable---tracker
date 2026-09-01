@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#080d1a">
 <title>My Timetable Tracker</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">checkExpiredTasks();
+setInterval(checkExpiredTasks,60000);
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
@@ -97,27 +99,7 @@ async function saveMark(k,v){const[t,d]=k.split("|");const r=await db.from("mark
 function updateRankUI(){const info=rankInfo(profile?.rank||"A"),l=Math.max(0,Number(profile?.lives??3));$("#rankIcon").textContent=info.icon;$("#rankName").textContent=info.name;$("#rankMeta").textContent=`${l?"❤️".repeat(l):"💔"} ${l} lives`;$("#lives").textContent=l?"❤️".repeat(l):"💔"}
 function monthStats(){const y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();let completed=0,missed=0,best=0,current=0;for(let d=1;d<=days;d++){let allDone=tasks.length>0;for(const t of tasks){const k=`${t.id}|${y}-${pad(m+1)}-${pad(d)}`,v=marks[k]||0;if(v===1)completed++;if(v===2)missed++;if(v!==1)allDone=false}if(allDone){current++;best=Math.max(best,current)}else current=0}const total=completed+missed;return{completed,missed,best,rate:total?Math.round(completed/total*100):0}}
 function updateStats(){const s=monthStats();$("#rate").textContent=`${s.rate}%`;$("#done").textContent=s.completed;$("#miss").textContent=s.missed;$("#streak").textContent=s.best;$("#xp").textContent=s.completed*10+s.best*25;updateRankUI()}
-async function checkExpiredTasks(){
-if(!user||!tasks.length)return;
-const now=Date.now();let changed=false,missedAdded=0;
-for(const t of tasks){
-const mins=parseTaskTime(t.time);if(mins===null)continue;
-const y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();
-for(let d=1;d<=days;d++){
-const date=`${y}-${pad(m+1)}-${pad(d)}`,k=taskDateKey(t,date);if(marks[k])continue;
-const due=new Date(`${date}T00:00:00`);due.setHours(Math.floor(mins/60),mins%60,0,0);
-if(now<=due.getTime()+30*60000)continue;
-try{await saveMark(k,2);missedAdded++;changed=true}catch(e){console.error("Auto-miss save:",e)}
-}
-}
-if(missedAdded){
-let lives=Math.max(0,Number(profile?.lives??3)-missedAdded);let rank=profile?.rank||"A";
-if(lives===0){rank=rankCode(rankIndex(rank)-1);lives=3}
-const r=await db.from("profiles").update({lives,rank}).eq("id",user.id).select().single();if(!r.error)profile=r.data;
-}
-if(changed)render();
-setInterval(()=>checkExpiredTasks(),60000);
-}
+
 function render(){const y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();monthInput.value=`${y}-${pad(m+1)}`;monthTitle.textContent=view.toLocaleDateString("en-IN",{month:"long",year:"numeric"});let h="<table><thead><tr><th>Task</th><th>Time</th>";for(let d=1;d<=days;d++)h+=`<th>${d}</th>`;h+="<th>Delete</th></tr></thead><tbody>";if(!tasks.length)h+=`<tr><td colspan="${days+3}" class="empty">Abhi koi task nahi hai.<br>Upar se task add karo 👆</td></tr>`;else for(const t of tasks){h+=`<tr><td class="task-name">${esc(t.name)}</td><td class="task-time">${esc(displayTime(t.time))}</td>`;for(let d=1;d<=days;d++){const date=`${y}-${pad(m+1)}-${pad(d)}`,k=taskDateKey(t,date),v=marks[k]||0,s=verificationStatus(t,date);let text="—",c="cell";if(v===1){text="✓";c+=" complete"}else if(v===2){text="X";c+=" missed"}else if(s==="window")c+=" verify";else c+=" locked";if(date===todayKey())c+=" today";h+=`<td><button class="${c}" data-mark="${esc(k)}">${text}</button></td>`}h+=`<td><button class="del" data-delete="${esc(t.id)}">Delete</button></td></tr>`}h+="</tbody></table>";grid.innerHTML=h;updateStats();attachGridEvents()}
 function attachGridEvents(){document.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("Task delete karna hai?"))return;const r=await db.from("tasks").delete().eq("id",b.dataset.delete).eq("user_id",user.id);if(r.error)alert("Delete error: "+r.error.message);else{tasks=tasks.filter(t=>String(t.id)!==String(b.dataset.delete));render()}});document.querySelectorAll("[data-mark]").forEach(b=>b.onclick=async()=>{const k=b.dataset.mark,[id,date]=k.split("|"),t=tasks.find(x=>String(x.id)===String(id));if(!t)return;const s=verificationStatus(t,date);if(marks[k]===1)return;if(marks[k]===2){toast("❌ Ye task miss ho chuka hai.");return}if(s==="future"){toast("⏰ Abhi iska time nahi hua.");return}if(s==="window")startVerification(k,t);else toast("⏰ Verification window expire ho chuki hai.")})}
 addForm.onsubmit=async e=>{e.preventDefault();const name=taskInput.value.trim(),time=timeInput.value;if(!name||!time)return toast("Task aur time dono bharo.");const b=addForm.querySelector("button");b.disabled=true;try{const r=await db.from("tasks").insert({user_id:user.id,name,time}).select().single();if(r.error)throw r.error;tasks.push(r.data);taskInput.value="";timeInput.value="";render()}catch(x){alert("Task add nahi hua: "+x.message)}finally{b.disabled=false}};
