@@ -1,6 +1,9 @@
 name: Fix auto missed tasks
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-auto-missed.yml'
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -8,21 +11,65 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Patch auto-missed logic
+      - name: Fix automatic missed marking
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text()
-          if 'async function checkExpiredTasks(){' not in s:
-              marker='function render(){'
-              fn='''async function checkExpiredTasks(){\nif(!user||!tasks.length)return;\nconst now=Date.now();let changed=false,missedAdded=0;\nfor(const t of tasks){\nconst mins=parseTaskTime(t.time);if(mins===null)continue;\nconst y=view.getFullYear(),m=view.getMonth(),days=new Date(y,m+1,0).getDate();\nfor(let d=1;d<=days;d++){\nconst date=`${y}-${pad(m+1)}-${pad(d)}`,k=taskDateKey(t,date);if(marks[k])continue;\nconst due=new Date(`${date}T00:00:00`);due.setHours(Math.floor(mins/60),mins%60,0,0);\nif(now<=due.getTime()+30*60000)continue;\ntry{await saveMark(k,2);missedAdded++;changed=true}catch(e){console.error("Auto-miss save:",e)}\n}\n}\nif(missedAdded){\nlet lives=Math.max(0,Number(profile?.lives??3)-missedAdded);let rank=profile?.rank||"A";\nif(lives===0){rank=rankCode(rankIndex(rank)-1);lives=3}\nconst r=await db.from("profiles").update({lives,rank}).eq("id",user.id).select().single();if(!r.error)profile=r.data;\n}\nif(changed)render();\n}\n'''
-              if marker not in s: raise SystemExit('render marker missing')
-              s=s.replace(marker,fn+marker,1)
-          if 'setInterval(()=>checkExpiredTasks(),60000)' not in s:
-              needle='render();'
-              # Add polling after the first startup render invocation near the end.
-              s=s.replace(needle,needle+'\nsetInterval(()=>checkExpiredTasks(),60000);',1)
+          start=s.find('async function checkExpiredTasks(){')
+          if start>=0:
+              end=s.find('if(changed)render();', start)
+              if end>=0:
+                  end=s.find('\n}', end)
+                  if end>=0:
+                      end += 2
+                      s=s[:start]+s[end:]
+          fn=r'''async function checkExpiredTasks(){
+          if(!user||!tasks.length)return;
+          const now=new Date();
+          let changed=false;
+          let missedCount=0;
+          let lives=Number(profile?.lives??3);
+          let rank=profile?.rank||"A";
+          for(const t of tasks){
+            if(!t.time)continue;
+            const parts=String(t.time).split(":");
+            const hh=Number(parts[0]), mm=Number(parts[1]);
+            if(!Number.isFinite(hh)||!Number.isFinite(mm))continue;
+            const y=view.getFullYear(), m=view.getMonth();
+            const days=new Date(y,m+1,0).getDate();
+            for(let d=1;d<=days;d++){
+              const date=`${y}-${pad(m+1)}-${pad(d)}`;
+              const k=taskDateKey(t,date);
+              if(marks[k])continue;
+              const due=new Date(y,m,d,hh,mm,0,0);
+              const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+              const dueDay=new Date(y,m,d);
+              if(dueDay>today)continue;
+              if(now.getTime()<=due.getTime()+30*60000)continue;
+              try{
+                await saveMark(k,2);
+                missedCount++;
+                changed=true;
+                lives--;
+                if(lives<=0){
+                  rank=rankCode(rankIndex(rank)-1);
+                  lives=3;
+                }
+              }catch(e){console.error("Auto-miss save:",e)}
+            }
+          }
+          if(missedCount){
+            const r=await db.from("profiles").update({lives,rank}).eq("id",user.id).select().single();
+            if(!r.error)profile=r.data;
+          }
+          if(changed)render();
+          }'''
+          s=s.replace('async function checkExpiredTasks(){',fn+'\n',1) if 'async function checkExpiredTasks(){' not in s else s
+          marker='</script>'
+          s=s.replace(marker,'checkExpiredTasks();\nsetInterval(checkExpiredTasks,60000);\n'+marker,1)
           p.write_text(s)
           PY
       - name: Commit patch
@@ -30,5 +77,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Fix automatic missed task marking'
+          git diff --cached --quiet || git commit -m 'Fix automatic missed task timing and polling'
           git push
