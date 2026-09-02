@@ -1,1 +1,0 @@
-// Duplicate source removed. The active MainActivity is at android-app/app/src/main/java/com/timetabletracker/app/MainActivity.java.
