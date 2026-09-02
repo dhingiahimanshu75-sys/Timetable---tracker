@@ -27,7 +27,6 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
-
         swipeRefresh = new SwipeRefreshLayout(this);
         webView = new WebView(this);
         swipeRefresh.addView(webView);
@@ -49,7 +48,6 @@ public class MainActivity extends Activity {
                 injectLoginHelpers();
             }
         });
-
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(final PermissionRequest request) {
                 runOnUiThread(() -> request.grant(request.getResources()));
@@ -57,27 +55,17 @@ public class MainActivity extends Activity {
         });
 
         swipeRefresh.setOnRefreshListener(() -> {
+            // Reload the existing app page so the latest GitHub Pages code is used.
+            // DOM storage is kept enabled; no WebView data/cookies/cache are cleared.
             swipeRefresh.setRefreshing(true);
-            webView.evaluateJavascript(
-                "(async()=>{try{" +
-                "if(typeof loadData==='function' && typeof user!=='undefined' && user){await loadData();}" +
-                "if(typeof ensureProfile==='function' && typeof user!=='undefined' && user){await ensureProfile();}" +
-                "if(typeof checkExpiredTasks==='function'){await checkExpiredTasks();}" +
-                "if(typeof applyRankUp==='function'){await applyRankUp();}" +
-                "if(typeof render==='function'){render();}" +
-                "if(typeof loadFriendRequests==='function' && typeof user!=='undefined' && user){await loadFriendRequests();}" +
-                "if(typeof loadFriends==='function' && typeof user!=='undefined' && user){await loadFriends();}" +
-                "}catch(e){console.error('Native refresh:',e)}finally{if(window.AndroidNotify)AndroidNotify.refreshDone();}})();",
-                null
-            );
-            webView.postDelayed(() -> swipeRefresh.setRefreshing(false), 8000);
+            webView.reload();
+            webView.postDelayed(() -> swipeRefresh.setRefreshing(false), 10000);
         });
 
         if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_REQUEST);
-
         webView.loadUrl(APP_URL);
     }
 
@@ -86,8 +74,7 @@ public class MainActivity extends Activity {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Timetable reminders", NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("Verification window reminders");
             channel.enableVibration(true);
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            nm.createNotificationChannel(channel);
+            getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
     }
 
@@ -95,7 +82,6 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void refreshDone() {
             runOnUiThread(() -> swipeRefresh.setRefreshing(false));
         }
-
         @JavascriptInterface public void notifyTask(String taskName) {
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
@@ -117,24 +103,15 @@ public class MainActivity extends Activity {
             "(()=>{" +
             "const p=document.getElementById('password');" +
             "if(p&&!document.getElementById('passwordToggle')){" +
-            "const b=document.createElement('button');" +
-            "b.id='passwordToggle';b.type='button';b.textContent='👁️';" +
-            "b.setAttribute('aria-label','Show password');" +
+            "const b=document.createElement('button');b.id='passwordToggle';b.type='button';b.textContent='👁️';b.setAttribute('aria-label','Show password');" +
             "b.style.cssText='position:absolute;right:12px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:6px;margin:0;width:auto;min-width:0;font-size:20px;cursor:pointer;';" +
-            "const wrap=document.createElement('div');wrap.style.cssText='position:relative;margin-bottom:10px;';" +
-            "p.parentNode.insertBefore(wrap,p);wrap.appendChild(p);" +
-            "p.style.marginBottom='0';p.style.paddingRight='48px';" +
-            "b.onclick=()=>{const show=p.type==='password';p.type=show?'text':'password';b.textContent=show?'🙈':'👁️';b.setAttribute('aria-label',show?'Hide password':'Show password');};" +
-            "wrap.appendChild(b);" +
+            "const wrap=document.createElement('div');wrap.style.cssText='position:relative;margin-bottom:10px;';p.parentNode.insertBefore(wrap,p);wrap.appendChild(p);p.style.marginBottom='0';p.style.paddingRight='48px';" +
+            "b.onclick=()=>{const show=p.type==='password';p.type=show?'text':'password';b.textContent=show?'🙈':'👁️';b.setAttribute('aria-label',show?'Hide password':'Show password');};wrap.appendChild(b);" +
             "}" +
             "if(typeof window.sendTaskNotification==='function'&&!window.sendTaskNotification.__nativeWrapped){" +
-            "const old=window.sendTaskNotification;" +
-            "const wrapped=function(task){try{if(window.AndroidNotify)AndroidNotify.notifyTask(String(task?.name||'Task'));}catch(e){};try{return old.apply(this,arguments);}catch(e){}};" +
-            "wrapped.__nativeWrapped=true;window.sendTaskNotification=wrapped;" +
+            "const old=window.sendTaskNotification;const wrapped=function(task){try{if(window.AndroidNotify)AndroidNotify.notifyTask(String(task?.name||'Task'));}catch(e){};try{return old.apply(this,arguments);}catch(e){}};wrapped.__nativeWrapped=true;window.sendTaskNotification=wrapped;" +
             "}" +
-            "})();",
-            null
-        );
+            "})();", null);
     }
 
     @Override public void onBackPressed() {
