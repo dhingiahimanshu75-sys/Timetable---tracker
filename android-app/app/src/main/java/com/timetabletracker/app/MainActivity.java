@@ -127,6 +127,11 @@ public class MainActivity extends Activity {
             "b.onclick=()=>{const show=p.type==='password';p.type=show?'text':'password';b.textContent=show?'🙈':'👁️';b.setAttribute('aria-label',show?'Hide password':'Show password');};" +
             "wrap.appendChild(b);" +
             "}" +
+            "if(typeof window.sendTaskNotification==='function'&&!window.sendTaskNotification.__nativeWrapped){" +
+            "const old=window.sendTaskNotification;" +
+            "const wrapped=function(task){try{if(window.AndroidNotify)AndroidNotify.notifyTask(String(task?.name||'Task'));}catch(e){};try{return old.apply(this,arguments);}catch(e){}};" +
+            "wrapped.__nativeWrapped=true;window.sendTaskNotification=wrapped;" +
+            "}" +
             "})();",
             null
         );
