@@ -1,0 +1,69 @@
+name: Fix friends display
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-friends-display.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch friends UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          marker='</body>'
+          patch=r'''<script>
+          (()=>{
+            async function renderFriendsFixed(){
+              try{
+                const {data:{user:u}}=await db.auth.getUser();
+                if(!u)return;
+                const panel=document.getElementById('friendsPanel');
+                const list=document.getElementById('friendsList');
+                const req=document.getElementById('friendRequests');
+                if(panel)panel.classList.remove('hidden');
+                const {data:rels,error:re}=await db.from('friendships').select('friend_id').eq('user_id',u.id);
+                if(re)throw re;
+                const ids=[...new Set((rels||[]).map(x=>x.friend_id).filter(Boolean))];
+                if(!ids.length){list.innerHTML='<p class="empty">Abhi koi friend nahi hai.</p>'}
+                else{
+                  const {data:ps,error:pe}=await db.from('profiles').select('id,email,rank,lives').in('id',ids);
+                  if(pe)throw pe;
+                  list.innerHTML=(ps||[]).map(f=>`<div class="friend-card"><div class="friend-top"><div><b>${String(f.email||'Friend').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</b><span class="small">Rank ${f.rank||'A'} · ❤️ ${f.lives??3}</span></div></div></div>`).join('')||'<p class="empty">Abhi koi friend nahi hai.</p>';
+                }
+                const {data:incoming}=await db.from('friend_requests').select('id,sender_id').eq('receiver_id',u.id).eq('status','pending');
+                if(req){
+                  if(!incoming?.length)req.innerHTML='<p class="empty">Koi pending request nahi hai.</p>';
+                  else{
+                    const ids2=incoming.map(x=>x.sender_id);
+                    const {data:senders}=await db.from('profiles').select('id,email').in('id',ids2);
+                    req.innerHTML=(incoming||[]).map(r=>{const f=(senders||[]).find(x=>x.id===r.sender_id);return `<div class="request"><span>${f?.email||'Friend request'}</span><button data-accept="${r.id}">Accept</button></div>`}).join('');
+                    req.querySelectorAll('[data-accept]').forEach(b=>b.onclick=async()=>{await db.from('friend_requests').update({status:'accepted'}).eq('id',b.dataset.accept);await renderFriendsFixed();});
+                  }
+                }
+              }catch(e){console.error('Friends fixed UI:',e);const m=document.getElementById('friendMessage');if(m)m.textContent='Friends load nahi hue: '+(e.message||e)}
+            }
+            window.renderFriendsFixed=renderFriendsFixed;
+            const btn=document.getElementById('friendsBtn');
+            if(btn){const n=btn.cloneNode(true);btn.replaceWith(n);n.addEventListener('click',renderFriendsFixed)}
+            const close=document.getElementById('closeFriends');
+            if(close)close.addEventListener('click',()=>document.getElementById('friendsPanel')?.classList.add('hidden'));
+          })();
+          </script>'''
+          if 'renderFriendsFixed' not in s:
+              s=s.replace(marker,patch+'\n'+marker,1)
+              p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Fix friends list rendering'
+          git push
