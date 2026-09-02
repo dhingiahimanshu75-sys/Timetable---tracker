@@ -67,6 +67,17 @@ td:last-child,th:last-child{border-right:0}.task-name{text-align:left;min-width:
 @media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.top,.bar,.friends-head{flex-direction:column;align-items:stretch}.stats{grid-template-columns:repeat(2,1fr)}#add{flex-wrap:wrap}#add input{flex:1;width:auto!important;min-width:120px}.friend-compare{grid-template-columns:repeat(2,1fr)}.user-area{flex-wrap:wrap}h1{font-size:24px}}
 </style>
+
+<style id="verification-modal-mobile-fix">
+/* VERIFICATION_MODAL_MOBILE_FIX_V1 */
+#verificationOverlay{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:100%!important;height:100dvh!important;min-height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:12px!important;overflow:hidden!important;}
+#verificationOverlay .modal{width:min(680px,calc(100vw - 24px))!important;max-width:680px!important;max-height:calc(100dvh - 24px)!important;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;margin:auto!important;padding:16px!important;}
+#verificationOverlay .modal h2{margin:0 0 6px!important;font-size:clamp(22px,5vw,30px)!important;line-height:1.2!important;}
+#verificationOverlay .modal .sub{margin:4px 0!important;}
+#verificationOverlay .modal video{display:block!important;width:100%!important;height:auto!important;max-height:38dvh!important;min-height:160px!important;object-fit:cover!important;}
+#verificationOverlay .actions{gap:7px!important;}
+@media(max-width:720px){#verificationOverlay{padding:8px!important;}#verificationOverlay .modal{width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;padding:13px!important;border-radius:16px!important;}#verificationOverlay .modal video{max-height:32dvh!important;min-height:150px!important;}#verificationOverlay .actions button{padding:9px 10px!important;font-size:13px!important;}}
+</style>
 </head>
 <body>
 <div id="loginScreen" class="login-screen"><div class="login-card"><h1>📅 My Timetable Tracker</h1><p id="loginText">Login karke apna tracker open karo.</p><div id="loginError" class="error-box hidden"></div><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="authBtn">Login</button><div id="switchAuth" class="switch">Account nahi hai? Signup</div></div></div>
