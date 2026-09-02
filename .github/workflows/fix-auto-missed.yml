@@ -11,11 +11,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Fix automatic missed marking
+      - name: Fix automatic missed marking and task start dates
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text()
           start=s.find('async function checkExpiredTasks(){')
@@ -35,29 +34,27 @@ jobs:
           let rank=profile?.rank||"A";
           for(const t of tasks){
             if(!t.time)continue;
+            const created=t.created_at?new Date(t.created_at):now;
+            const startDate=new Date(created.getFullYear(),created.getMonth(),created.getDate());
             const parts=String(t.time).split(":");
             const hh=Number(parts[0]), mm=Number(parts[1]);
             if(!Number.isFinite(hh)||!Number.isFinite(mm))continue;
-            const y=view.getFullYear(), m=view.getMonth();
+            const y=now.getFullYear(), m=now.getMonth();
             const days=new Date(y,m+1,0).getDate();
             for(let d=1;d<=days;d++){
               const date=`${y}-${pad(m+1)}-${pad(d)}`;
               const k=taskDateKey(t,date);
               if(marks[k])continue;
               const due=new Date(y,m,d,hh,mm,0,0);
-              const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
               const dueDay=new Date(y,m,d);
-              if(dueDay>today)continue;
+              if(dueDay<startDate || dueDay>new Date(now.getFullYear(),now.getMonth(),now.getDate()))continue;
               if(now.getTime()<=due.getTime()+30*60000)continue;
               try{
                 await saveMark(k,2);
                 missedCount++;
                 changed=true;
                 lives--;
-                if(lives<=0){
-                  rank=rankCode(rankIndex(rank)-1);
-                  lives=3;
-                }
+                if(lives<=0){rank=rankCode(Math.max(0,rankIndex(rank)-1));lives=3;}
               }catch(e){console.error("Auto-miss save:",e)}
             }
           }
@@ -66,10 +63,23 @@ jobs:
             if(!r.error)profile=r.data;
           }
           if(changed)render();
-          }'''
-          s=s.replace('async function checkExpiredTasks(){',fn+'\n',1) if 'async function checkExpiredTasks(){' not in s else s
-          marker='</script>'
-          s=s.replace(marker,'checkExpiredTasks();\nsetInterval(checkExpiredTasks,60000);\n'+marker,1)
+          }
+          '''
+          # Replace the verification-status function using balanced braces.
+          marker='function verificationStatus(task,date){'
+          pos=s.find(marker)
+          if pos>=0:
+              i=pos+len(marker); depth=1
+              while i<len(s) and depth:
+                  if s[i]=='{': depth+=1
+                  elif s[i]=='}': depth-=1
+                  i+=1
+              newfn='''function taskStartDate(task){\n  const raw=task?.created_at;\n  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}\n  return todayKey();\n}\nfunction verificationStatus(task,date){\n  if(date < taskStartDate(task)) return "future";\n  const k=taskDateKey(task,date),v=marks[k]||0;\n  if(v===1)return "done";\n  if(v===2)return "expired";\n  const mins=parseTaskTime(task.time);\n  if(mins===null)return "window";\n  const t=new Date(`${date}T00:00:00`);\n  t.setHours(Math.floor(mins/60),mins%60,0,0);\n  const n=Date.now(),start=t.getTime();\n  if(date!==todayKey())return start>n?"future":"expired";\n  if(n<start)return "future";\n  return n<=start+30*60000?"window":"expired";\n}'''
+              s=s[:pos]+newfn+s[i:]
+          # Keep pre-creation days out of monthly completion/streak calculations.
+          old='''if(value===1)completed++;if(value===2)missed++;if(value!==1)allDone=false;'''
+          new='''if(date>=taskStartDate(task)){if(value===1)completed++;if(value===2)missed++;if(value!==1)allDone=false;}'''
+          s=s.replace(old,new)
           p.write_text(s)
           PY
       - name: Commit patch
@@ -77,5 +87,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Fix automatic missed task timing and polling'
+          git diff --cached --quiet || git commit -m 'Fix task start date and auto missed timing'
           git push
