@@ -1,0 +1,37 @@
+name: Fix verification modal
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-verification-modal.yml'
+  workflow_dispatch:
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix mobile verification modal
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          marker='<!-- VERIFICATION_MODAL_MOBILE_FIX_V1 -->'
+          if marker in s:
+              print('already fixed')
+              raise SystemExit(0)
+          css='''\n<style id="verification-modal-mobile-fix">\n/* VERIFICATION_MODAL_MOBILE_FIX_V1 */\n#verificationOverlay{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:100%!important;height:100dvh!important;min-height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:12px!important;overflow:hidden!important;}\n#verificationOverlay .modal{width:min(680px,calc(100vw - 24px))!important;max-width:680px!important;max-height:calc(100dvh - 24px)!important;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;margin:auto!important;padding:16px!important;}\n#verificationOverlay .modal h2{margin:0 0 6px!important;font-size:clamp(22px,5vw,30px)!important;line-height:1.2!important;}\n#verificationOverlay .modal .sub{margin:4px 0!important;}\n#verificationOverlay .modal video{display:block!important;width:100%!important;height:auto!important;max-height:38dvh!important;min-height:160px!important;object-fit:cover!important;}\n#verificationOverlay .actions{gap:7px!important;}\n@media(max-width:720px){#verificationOverlay{padding:8px!important;}#verificationOverlay .modal{width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;padding:13px!important;border-radius:16px!important;}#verificationOverlay .modal video{max-height:32dvh!important;min-height:150px!important;}#verificationOverlay .actions button{padding:9px 10px!important;font-size:13px!important;}}\n</style>\n'''
+          if '</head>' in s:
+              s=s.replace('</head>',css+'</head>',1)
+          else:
+              s=css+s
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Fix mobile activity verification modal [skip ci]'
+          git push
