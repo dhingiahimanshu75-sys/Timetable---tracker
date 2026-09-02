@@ -92,7 +92,25 @@ function taskType(task){const s=String(task?.name||"").toLowerCase();if(/water|p
 function toast(message){const b=$("#toast");b.textContent=message;b.style.display="block";clearTimeout(b._timer);b._timer=setTimeout(()=>b.style.display="none",3000)}function showLoginError(m){loginError.textContent=m;loginError.classList.remove("hidden")}function clearLoginError(){loginError.textContent="";loginError.classList.add("hidden")}
 let tickVoiceUnlocked=false;function unlockTickVoice(){if(tickVoiceUnlocked)return;try{tickVoice.volume=0;const p=tickVoice.play();if(p)p.then(()=>{tickVoice.pause();tickVoice.currentTime=0;tickVoice.volume=1;tickVoiceUnlocked=true}).catch(()=>{tickVoice.volume=1})}catch(_){}}function playTickVoice(){try{tickVoice.currentTime=0;tickVoice.volume=1;const p=tickVoice.play();if(p)p.catch(()=>{})}catch(_){}}
 function requestNotificationPermission(){if(!window.Notification||Notification.permission!=="default")return;Promise.resolve().then(()=>Notification.requestPermission()).catch(()=>{})}
-function verificationStatus(task,date){const k=taskDateKey(task,date),v=marks[k]||0;if(v===1)return"done";if(v===2)return"expired";const mins=parseTaskTime(task.time);if(mins===null)return"window";const t=new Date(`${date}T00:00:00`);t.setHours(Math.floor(mins/60),mins%60,0,0);const n=Date.now(),start=t.getTime();if(date!==todayKey())return start>n?"future":"expired";if(n<start)return"future";return n<=start+30*60000?"window":"expired"}
+function taskStartDate(task){
+  const raw=task?.created_at;
+  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+  return todayKey();
+}
+function verificationStatus(task,date){
+  if(date < taskStartDate(task)) return "future";
+  const k=taskDateKey(task,date),v=marks[k]||0;
+  if(v===1)return "done";
+  if(v===2)return "expired";
+  const mins=parseTaskTime(task.time);
+  if(mins===null)return "window";
+  const t=new Date(`${date}T00:00:00`);
+  t.setHours(Math.floor(mins/60),mins%60,0,0);
+  const n=Date.now(),start=t.getTime();
+  if(date!==todayKey())return start>n?"future":"expired";
+  if(n<start)return "future";
+  return n<=start+30*60000?"window":"expired";
+}
 async function ensureProfile(){let r=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();if(r.error)throw r.error;if(!r.data){const x=await db.from("profiles").insert({id:user.id,email:user.email,username:(user.email||"User").split("@")[0],rank:"A",lives:3}).select().single();if(x.error)throw x.error;profile=x.data}else{profile=r.data;if(!profile.rank||profile.lives==null){const x=await db.from("profiles").update({rank:profile.rank||"A",lives:profile.lives==null?3:profile.lives}).eq("id",user.id).select().single();if(x.error)throw x.error;profile=x.data}}}
 async function loadData(){const a=await db.from("tasks").select("*").eq("user_id",user.id).order("created_at",{ascending:true});if(a.error)throw a.error;tasks=a.data||[];const b=await db.from("marks").select("*").eq("user_id",user.id);if(b.error)throw b.error;marks={};(b.data||[]).forEach(m=>marks[`${m.task_id}|${m.mark_date}`]=m.completed?1:2)}
 async function saveMark(k,v){const[t,d]=k.split("|");const r=await db.from("marks").upsert({user_id:user.id,task_id:t,mark_date:d,completed:v===1},{onConflict:"user_id,task_id,mark_date"});if(r.error)throw r.error;marks[k]=v}
