@@ -11,19 +11,48 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Restore full friend cards
+      - name: Restore detailed friend cards
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          marker='<!-- FRIEND_DETAILS_RESTORE -->'
-          patch=r'''<!-- FRIEND_DETAILS_RESTORE --><script>
-          (()=>{
+          marker='<!-- FRIEND_DETAILS_V3 -->'
+          patch=r'''<!-- FRIEND_DETAILS_V3 --><script>
+          (function(){
+            async function detailedFriends(){
+              if(!window.user && typeof user==='undefined') return;
+              const u=window.user || user;
+              const box=document.getElementById('friendsList');
+              if(!box) return;
+              try{
+                const ids=new Set();
+                const a=await db.from('friendships').select('friend_id').eq('user_id',u.id);
+                const b=await db.from('friendships').select('user_id').eq('friend_id',u.id);
+                (a.data||[]).forEach(x=>x.friend_id&&ids.add(String(x.friend_id)));
+                (b.data||[]).forEach(x=>x.user_id&&ids.add(String(x.user_id)));
+                const r=await db.from('friend_requests').select('sender_id,receiver_id').eq('status','accepted').or('sender_id.eq.'+u.id+',receiver_id.eq.'+u.id);
+                (r.data||[]).forEach(x=>ids.add(String(String(x.sender_id)===String(u.id)?x.receiver_id:x.sender_id)));
+                if(!ids.size){box.innerHTML='<p class="empty">Abhi koi friend nahi hai.</p>';return;}
+                box.innerHTML='';
+                const mine=(typeof monthStats==='function')?monthStats():{rate:0};
+                for(const id of ids){
+                  const q=await db.from('profiles').select('username,email,rank,lives').eq('id',id).maybeSingle();
+                  if(q.error||!q.data)continue;
+                  let st={rate:0,streak:0};
+                  if(typeof getFriendStats==='function'){try{st=await getFriendStats(id)}catch(e){}}
+                  const ri=typeof rankInfo==='function'?rankInfo(q.data.rank||'A'):{icon:'😎',name:q.data.rank||'A'};
+                  const cmp=mine.rate>st.rate?'🏆 You are ahead':mine.rate<st.rate?'🔥 Friend is ahead':'🤝 Equal';
+                  const card=document.createElement('div'); card.className='friend-card';
+                  const safe=(typeof esc==='function')?esc:(x=>String(x??''));
+                  card.innerHTML='<div class="friend-top"><div><b>'+safe(q.data.username||q.data.email)+'</b><small class="small">'+safe(q.data.email||'')+'</small></div><div>'+ri.icon+' '+safe(ri.name)+'</div></div><div class="friend-compare"><div class="mini"><b>'+st.rate+'%</b><span>Monthly</span></div><div class="mini"><b>'+st.streak+'</b><span>Streak</span></div><div class="mini"><b>❤️ '+Number(q.data.lives??3)+'</b><span>Lives</span></div><div class="mini"><b>'+safe(ri.name)+'</b><span>Rank</span></div></div><div class="sub" style="margin-top:9px">'+cmp+'</div>';
+                  box.appendChild(card);
+                }
+              }catch(e){console.error('Detailed friends:',e)}
+            }
+            window.detailedFriends=detailedFriends;
             const b=document.getElementById('friendsBtn');
-            const send=document.getElementById('sendFriendRequest');
-            if(b){const n=b.cloneNode(true);b.replaceWith(n);n.onclick=async()=>{document.getElementById('friendsPanel')?.classList.remove('hidden');try{await loadFriendRequests();await loadFriends();}catch(e){console.error(e)}}}
-            if(send){const n=send.cloneNode(true);send.replaceWith(n);n.onclick=async()=>{try{await sendFriendRequest();}catch(e){console.error(e)}}}
+            if(b){const n=b.cloneNode(true);b.replaceWith(n);n.addEventListener('click',async()=>{document.getElementById('friendsPanel')?.classList.remove('hidden');if(typeof loadFriendRequests==='function')await loadFriendRequests();await detailedFriends();});}
           })();
           </script>'''
           if marker not in s:
@@ -35,5 +64,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Restore full friend progress details'
+          git diff --cached --quiet || git commit -m 'Restore detailed friend progress comparison'
           git push
