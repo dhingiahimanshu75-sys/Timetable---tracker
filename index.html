@@ -120,4 +120,42 @@ async function startApp(u){user=u;userEmail.textContent=user.email||"";try{await
 authBtn.onclick=async()=>{clearLoginError();const email=emailInput.value.trim(),password=passwordInput.value;if(!email||!password)return showLoginError("Email aur password dono bharo.");authBtn.disabled=true;try{const r=signupMode?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(signupMode&&!r.data.session)return alert("Signup successful. Email verify karke login karo.");await startApp(r.data.user)}catch(e){showLoginError(e.message)}finally{authBtn.disabled=false}};
 passwordInput.onkeydown=e=>{if(e.key==="Enter")authBtn.click()};logoutBtn.onclick=async()=>{await db.auth.signOut();location.reload()};db.auth.getSession().then(r=>{if(r.data?.session?.user)startApp(r.data.session.user)});render();
 </script>
+<script>
+(()=>{
+  async function renderFriendsFixed(){
+    try{
+      const {data:{user:u}}=await db.auth.getUser();
+      if(!u)return;
+      const panel=document.getElementById('friendsPanel');
+      const list=document.getElementById('friendsList');
+      const req=document.getElementById('friendRequests');
+      if(panel)panel.classList.remove('hidden');
+      const {data:rels,error:re}=await db.from('friendships').select('friend_id').eq('user_id',u.id);
+      if(re)throw re;
+      const ids=[...new Set((rels||[]).map(x=>x.friend_id).filter(Boolean))];
+      if(!ids.length){list.innerHTML='<p class="empty">Abhi koi friend nahi hai.</p>'}
+      else{
+        const {data:ps,error:pe}=await db.from('profiles').select('id,email,rank,lives').in('id',ids);
+        if(pe)throw pe;
+        list.innerHTML=(ps||[]).map(f=>`<div class="friend-card"><div class="friend-top"><div><b>${String(f.email||'Friend').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</b><span class="small">Rank ${f.rank||'A'} · ❤️ ${f.lives??3}</span></div></div></div>`).join('')||'<p class="empty">Abhi koi friend nahi hai.</p>';
+      }
+      const {data:incoming}=await db.from('friend_requests').select('id,sender_id').eq('receiver_id',u.id).eq('status','pending');
+      if(req){
+        if(!incoming?.length)req.innerHTML='<p class="empty">Koi pending request nahi hai.</p>';
+        else{
+          const ids2=incoming.map(x=>x.sender_id);
+          const {data:senders}=await db.from('profiles').select('id,email').in('id',ids2);
+          req.innerHTML=(incoming||[]).map(r=>{const f=(senders||[]).find(x=>x.id===r.sender_id);return `<div class="request"><span>${f?.email||'Friend request'}</span><button data-accept="${r.id}">Accept</button></div>`}).join('');
+          req.querySelectorAll('[data-accept]').forEach(b=>b.onclick=async()=>{await db.from('friend_requests').update({status:'accepted'}).eq('id',b.dataset.accept);await renderFriendsFixed();});
+        }
+      }
+    }catch(e){console.error('Friends fixed UI:',e);const m=document.getElementById('friendMessage');if(m)m.textContent='Friends load nahi hue: '+(e.message||e)}
+  }
+  window.renderFriendsFixed=renderFriendsFixed;
+  const btn=document.getElementById('friendsBtn');
+  if(btn){const n=btn.cloneNode(true);btn.replaceWith(n);n.addEventListener('click',renderFriendsFixed)}
+  const close=document.getElementById('closeFriends');
+  if(close)close.addEventListener('click',()=>document.getElementById('friendsPanel')?.classList.add('hidden'));
+})();
+</script>
 </body></html>
