@@ -11,12 +11,23 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Fix automatic missed marking and task start dates
+      - name: Fix automatic missed marking, task start dates and verification auto-open
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
+
+          # Remove an accidental inline body from the Supabase external script tag.
+          bad='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">checkExpiredTasks();\nsetInterval(checkExpiredTasks,60000);\n</script>'
+          good='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
+          s=s.replace(bad,good)
+
+          # Remove any previously appended runtime auto-open patch so this remains idempotent.
+          marker='<!-- VERIFICATION_AUTO_OPEN_FIX_V2 -->'
+          if marker in s:
+              s=s[:s.find(marker)]
+
           start=s.find('async function checkExpiredTasks(){')
           if start>=0:
               end=s.find('if(changed)render();', start)
@@ -65,21 +76,50 @@ jobs:
           if(changed)render();
           }
           '''
-          # Replace the verification-status function using balanced braces.
-          marker='function verificationStatus(task,date){'
-          pos=s.find(marker)
+          s=s.replace('function taskStartDate(task){','function taskStartDate(task){')
+          marker2='function verificationStatus(task,date){'
+          pos=s.find(marker2)
           if pos>=0:
-              i=pos+len(marker); depth=1
+              i=pos+len(marker2); depth=1
               while i<len(s) and depth:
                   if s[i]=='{': depth+=1
                   elif s[i]=='}': depth-=1
                   i+=1
               newfn='''function taskStartDate(task){\n  const raw=task?.created_at;\n  if(raw){const d=new Date(raw);if(!Number.isNaN(d.getTime()))return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}\n  return todayKey();\n}\nfunction verificationStatus(task,date){\n  if(date < taskStartDate(task)) return "future";\n  const k=taskDateKey(task,date),v=marks[k]||0;\n  if(v===1)return "done";\n  if(v===2)return "expired";\n  const mins=parseTaskTime(task.time);\n  if(mins===null)return "window";\n  const t=new Date(`${date}T00:00:00`);\n  t.setHours(Math.floor(mins/60),mins%60,0,0);\n  const n=Date.now(),start=t.getTime();\n  if(date!==todayKey())return start>n?"future":"expired";\n  if(n<start)return "future";\n  return n<=start+30*60000?"window":"expired";\n}'''
               s=s[:pos]+newfn+s[i:]
-          # Keep pre-creation days out of monthly completion/streak calculations.
           old='''if(value===1)completed++;if(value===2)missed++;if(value!==1)allDone=false;'''
           new='''if(date>=taskStartDate(task)){if(value===1)completed++;if(value===2)missed++;if(value!==1)allDone=false;}'''
           s=s.replace(old,new)
+
+          # Automatically open the verification window as soon as a task enters its 30-minute window.
+          s += r'''\n<!-- VERIFICATION_AUTO_OPEN_FIX_V2 -->
+<script>
+(function(){
+  let shownKey=null;
+  function autoOpenVerification(){
+    try{
+      if(!window.user || window.verificationRunning) return;
+      const date=typeof todayKey==='function'?todayKey():'';
+      if(!date || !Array.isArray(window.tasks)) return;
+      for(const t of window.tasks){
+        if(!t || !t.time) continue;
+        const k=typeof taskDateKey==='function'?taskDateKey(t,date):'';
+        if(!k || (window.marks && window.marks[k])) continue;
+        if(typeof verificationStatus==='function' && verificationStatus(t,date)==='window' && shownKey!==k){
+          shownKey=k;
+          if(typeof startVerification==='function') startVerification(k,t);
+          break;
+        }
+      }
+    }catch(e){ console.error('Verification auto-open:',e); }
+  }
+  window.addEventListener('load',function(){
+    setTimeout(autoOpenVerification,500);
+    setInterval(autoOpenVerification,1000);
+  });
+})();
+</script>
+'''
           p.write_text(s)
           PY
       - name: Commit patch
@@ -87,5 +127,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Fix task start date and auto missed timing'
+          git diff --cached --quiet || git commit -m 'Fix verification window auto open'
           git push
