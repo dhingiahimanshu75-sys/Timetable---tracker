@@ -28,6 +28,11 @@ jobs:
           if marker in s:
               s=s[:s.find(marker)]
 
+          # The auto-open helper is a separate script, so expose live lexical state safely.
+          needle='let user=null,profile=null,tasks=[],marks={};'
+          expose='''let user=null,profile=null,tasks=[],marks={};\nObject.defineProperties(window,{user:{get:()=>user},tasks:{get:()=>tasks},marks:{get:()=>marks},verificationRunning:{get:()=>verificationRunning}});'''
+          s=s.replace(needle,expose,1)
+
           start=s.find('async function checkExpiredTasks(){')
           if start>=0:
               end=s.find('if(changed)render();', start)
